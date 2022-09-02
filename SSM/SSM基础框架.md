@@ -147,8 +147,8 @@ Spring Framework是Spring生态圈中最基础、最顶级的项目，是其他�
    ```
 
 * property表示给当前的Bean配置属性，也就是给这个类的对象绑定关系
-* name属性表示 选择具体的 要绑定的 是 哪个对象 的名称
-* ref属性表示name选择的这个对象要参照的具体类型是什么，也就是另一个Bean的id属性
+* name属性表示 选择具体的 要绑定的 是类中的哪个成员变量对象 的名称
+* ref属性表示name选择的这个对象要参照的具体类型是什么，具体是哪一个bean，也就是另一个Bean的id属性
 
 ### 5.Bean
 
@@ -377,9 +377,13 @@ bean的生命周期的控制：在bean创建后到销毁前做的一些事情
 
 ### 6. DI 依赖注入
 
-像一个类中传递数据的方式：普通方法（set），构造方法
+向一个类中传递数据的方式：普通方法（set），构造方法
+
+此时这个数据可以为 **一个对象**
 
 依赖注入描述了容器建立bean与bean之间的依赖关系的过程
+
+原理也就是利用Java的反射机制，在加载时去调用set方法或构造方法为这个对象注入另一个所需对象。调用由Spring去调用。
 
 但如果bean运行需要的是数字或者是字符串时，则原来的无参方法不行了
 
@@ -396,7 +400,7 @@ bean的生命周期的控制：在bean创建后到销毁前做的一些事情
   }
   ```
 
-* 配置中在bean标签中使用property标签中的ref属性注入引用类型的对象类型，也就是另一个Bean的id，name属性表示 选择具体的 要绑定的 是 哪个对象 的名称
+* 配置中在bean标签中使用property标签中的ref属性，注入具体的引用类型的对象类型，是容器中的哪一个bean，也就是那一个bean的id，name属性表示 选择具体的 要绑定的 是 需要注入的类中的哪个成员变量对象 的名称
 
   ```xml
   <bean class="com.wyh.service.impl.BookServiceImpl" id="bookService">
@@ -607,9 +611,384 @@ bean的生命周期的控制：在bean创建后到销毁前做的一些事情
 
 这样的方式来管理不是自己写的第三方Bean，可能有些相关信息是需要在搜索引擎中自己查询的，比如c3p0（也是一个数据库连接池），但发现，这里面用setter注入的数据，大部分是不能直接写在程序中的。
 
+#### 7.1 加载properties配置文件信息
 
+* 开启context命名空间
 
+  ```xml
+  <beans xmlns="http://www.springframework.org/schema/beans"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:context="http://www.springframework.org/schema/context"
+         xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                             http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+  ```
 
+* 使用context命名空间，加载指定的properties文件
+
+  ```xml
+  <context:property-placeholder location="jdbc.properties"/>
+  ```
+
+* 使用${}（读取占位符）读取加载配置文件里面的属性值
+
+  ```xml
+  <property name="driverClassName" value="${jdbc.driver}"/>
+  ```
+
+* 注：
+
+  * 不加载系统的环境变量：
+
+    ```xml
+    <context:property-placeholder location="jdbc.properties" system-properties-mode="NEVER"/>
+    ```
+
+  * 加载多个properties文件
+
+    ```xml
+    <context:property-placeholder location="jdbc.properties，msg.properties"/>
+    ```
+
+  * 加载所有properties文件
+
+    ```xml
+    <context:property-placeholder location="*.properties"/>
+    ```
+
+  * 加载properties文件的标准格式
+
+    ```xml
+    <context:property-placeholder location="classpath:*.properties"/>
+    ```
+
+  * 从类路径或jar包中搜索并加载properties文件
+
+    ```xml
+    <context:property-placeholder location="classpath*:*.properties"/>
+    ```
+
+### 8. IoC容器
+
+#### 8.1 创建容器
+
+* 类路径加载配置文件（相对路径）
+
+  ```java
+  ApplicationContext ctx = new ClassPathXMLApplicationContext("applicationContext.xml");
+  ```
+
+* 文件路径加载配置文件（绝对路径）
+
+  ```java
+  ApplicationContext ctx = new FileSystemXMLApplicationContext("D:\\applicationContext.xml");
+  ```
+
+* 以上两种都可以加载多个配置文件，相当于合并在了一起
+
+  ```java
+  ApplicationContext ctx = new ClassPathXMLApplicationContext("bean1.xml"，"bean2.xml");
+  ```
+
+#### 8.2 获取bean
+
+* 使用bean的id名获取
+
+  ```java
+  BookDao bookDao = (BookDao) ctx.getBean("bookDao");
+  ```
+
+* 使用bean的id名称并指定其类型
+
+  ```java
+  BookDao bookDao = ctx.getBean("bookDao",BookDao.class);
+  ```
+
+* 使用bean的类型自动寻找
+
+  ```java
+  BookDao bookDao = ctx.getBean(BookDao.class);
+  ```
+
+  但是这个需要你的bean类型要唯一不能有多个
+
+#### 8.3 容器类层次结构
+
+* **最顶层接口**：BeanFactory
+* 常用接口：**ApplicationContext**
+* 提供关闭功能的接口：ConfigurableApplicationContext
+* 常用实现类：**ClassPathXmlApplicationContext**
+
+##### 8.3.1 BeanFactory的初始化
+
+* 类路径加载配置文件
+
+  ```java
+  Resource resources = new ClassPathResource("applicationContext.xml");
+  BeanFactory bf = new XmlBeanFactory(resources);
+  BookDao bookDao = bf.getBean("bookDao",BookDao,class);
+  bookDao.save();
+  ```
+
+  BeanFactory创建完毕后，所有的bean都是**延迟加载**，不会执行它的构造方法，ApplicationContext是Spring的核心接口，最常用，且为**立即加载**。
+
+### 9.注解开发
+
+Spring2.0开始提供的方法，简化开发
+
+#### 9.1 注解开发定义Bean
+
+* 使用@Component定义bean(component-组件)
+
+  ```java
+  @Component("bookDao")//给bean起了id名称
+  public class BookDaoImpl implements BookDap{}
+  @Component//未起id名
+  public class BookServiceImpl implements BookService{}
+  ```
+
+* 核心文件applicationContext.xml中通过组件扫描加载bean
+
+  ```xml
+  <context:component-scan base-package="com.wyh">
+  ```
+
+* 注：未起id名，则在getBean时，用类型去获取，且这个组件扫描是在context命名空间里面的
+
+* Spring提供@Component注解的三个衍生注解：
+
+  * **@Controller**：用于表现层bean定义
+  * **@Service**：用于业务层bean定义
+  * **@Repository**：用于数据层bean定义
+  * 注：功能与@Component一样，放便于我们理解
+
+#### 9.2 纯注解开发
+
+Spring3.0开始升级了纯注解开发模式，使用java类替代配置文件。
+
+* java类代替Spring的核心配置文件applicationContext.xml，建议新创建一个包叫config专门放置配置类
+
+  ```java
+  @Configuration//这是替换的所有的基础配置
+  @ComponentScan("com.wyh")//这是替换的组件扫描
+  public class SpringConfig{}
+  ```
+
+  注：**@Configuration**注解用于设定当前类为配置类
+
+  ​		**@ComponentScan**注解用于设定扫描路径，此注解只能添加一次，多个包需要扫描，则用字符串数组格式
+
+  如：
+
+  ```java
+  @ComponentScan({"com.wyh.service","com.wyh.dao"})
+  ```
+
+* 读取Spring核心配置文件初始化容器对象切换为**读取Java配置类初始化容器对象**
+
+  ```java
+  ApplicationContext ctx = new AnnotationConfigApplicationContext(SpringConfig.class);
+  ```
+
+#### 9.3 bean管理
+
+##### 9.3.1 bean作用范围
+
+* 使用@Scope定义bean的作用范围，是单例还是非单例
+
+  ```java
+  @Repository
+  @Scope("singleton")
+  public class BookDaoImpl implements BookDao{}
+  ```
+
+##### 9.3.2 bean生命周期
+
+* 使用@PostConstruct、@PreDestroy定义bean的生命周期
+
+  ```java
+  @Repository
+  @Scope("singleton")
+  public class BookServiceImpl implements BookService{
+      public BookServiceImpl(){}
+      @PostConstruct
+      public void init(){}
+      @PreDestroy
+      public void destroy(){}
+  }
+  ```
+
+#### 9.4 依赖注入
+
+纯注解开发的依赖注入为自动装配
+
+* 使用@Autowired注解开启自动装配（默认按类型）
+
+  ```java
+  @Service
+  public class BookServiceImpl implements BookService {
+      @Autowired
+      private BookDao bookDao;
+      public void save() {}
+  }
+  ```
+
+  * 自动装配基于反射原理。创建对象时暴力反射对应的私有属性并初始化数据，因此无需提供setter方法
+  * 自动装配建议使用无参的构造方法，这是默认的，且无参构造要唯一
+
+* 使用@Qualifier注解开启按指定名称装配bean
+
+  ```java
+  @Service
+  public class BookServiceImpl implements BookService {
+      @Autowired
+      @Qualifier("bookDao")
+      private BookDao bookDao;
+      public void save() {}
+  }
+  ```
+
+  注：@Qualifier注解无法单独使用，必须配合@Autowired注解使用
+
+* 使用@Value注解实现简单类型的注入
+
+  ```java
+  @Repository("bookDao")
+  public class BookDaoImpl implements BookDao {
+      @Value("wyh666")
+      private String name;
+  }
+  ```
+
+  注：注入简单类型时，可不用再加@Autowired，一般这样的格式，都是为了配合外部的properties文件使用的
+
+* 在配置类上使用@PropertySource注解加载properties文件
+
+  ```java
+  @Configuration
+  @ComponentScan("com.wyh")
+  @PropertySource("classpath:jdbc.properties")
+  public class SpringConfig{}
+  ...
+      
+  @Value("${name}")
+  private String name;
+  ```
+
+  注：加载的文件可以是多个，但要用{}包裹起来，为字符串数组。且此处**不可使用通配符***。注入的数据用${}包裹。
+
+#### 9.5 注解开发管理第三方bean
+
+例如管理Druid
+
+* 使用**@Bean**配置第三方的bean
+
+  ```java
+  @Configuration
+  public class SpringConfig{
+      @Bean
+      public DataSource dataSource() {
+          DruidDataSource ds = new DruidDataSource();
+          ds.setDriverClassName("com.mysql.cj.jdbc.Driver");
+          ds.setUrl("jdbc:mysql://localhost:3306/db1");
+          ds.setUsername("root");
+          ds.setPassword("xxxx");
+          return ds;
+      }
+  }
+  ```
+
+  注：@Bean是给这个方法定义，返回值是一个bean。这是一个工厂模式。不推荐直接把这个方法写在SpringConfig配置类中，很冗杂。
+
+* 所以推荐使用**独立的配置类管理第三方bean**
+
+  ```java
+  public class JdbcDruidConfig{
+      @Bean
+      public DataSource dataSource() {
+          DruidDataSource ds = new DruidDataSource();
+          ds.setDriverClassName("com.mysql.cj.jdbc.Driver");
+          ds.setUrl("jdbc:mysql://localhost:3306/db1");
+          ds.setUsername("root");
+          ds.setPassword("xxxx");
+          return ds;
+      }
+  }
+  ```
+
+  * 然后将独立的配置类加入到核心配置类SpringConfig中
+
+    * 方式一：导入式。使用@Import注解手动加入到核心配置类，此注解只能写一次，所以**多个其他的配置类，要用数组格式**
+
+      ```java
+      @Configuration
+      @Import(JdbcDruidConfig.class)
+      public class SpringConfig{}
+      ```
+
+    * 方式二：扫描式。隐藏性强，不是很推荐。使用@ComponentScan注解扫描配置类所在的包（config），加载对应的配置类信息
+
+      ```java
+      @Configuration
+      @ComponentScan({"com.wyh.config"})
+      public class SpringConfig{}
+      ```
+
+      注：对应的配置类上要有对应的@Configuration注解，表示这是配置类
+
+      ```java
+      @Configuration//方式二必须要有这个，方式一没有
+      public class JdbcDruidConfig{
+          @Bean
+          public DataSource dataSource() {
+              DruidDataSource ds = new DruidDataSource();
+              ds.setDriverClassName("com.mysql.cj.jdbc.Driver");
+              ds.setUrl("jdbc:mysql://localhost:3306/db1");
+              ds.setUsername("root");
+              ds.setPassword("xxxx");
+              return ds;
+          }
+      }
+      ```
+
+* 获取bean的方式为**按类型获取**：**getBean(DruidConfig.class)**，因为没有类似方法设置配置类的id名，也没办法按名称获取。
+
+##### 9.5.1 第三方bean的依赖注入
+
+* 简单类型依赖注入，用@Value注入
+
+  ```java
+  public class JdbcDruidConfig{
+      @Value("com.mysql.cj.jdbc.Driver")
+      private String driver;
+      @Value("jdbc:mysql://localhost:3306/db1")
+      private String url;
+      @Value("root")
+      private String username;
+      @Value("xxxx")
+      private String password;
+      
+      @Bean
+      public DataSource dataSource() {
+          DruidDataSource ds = new DruidDataSource();
+          ds.setDriverClassName(driver);
+          ds.setUrl(url);
+          ds.setUsername(username);
+          ds.setPassword(password);
+          return ds;
+      }
+  }
+  ```
+
+* 引用类型依赖注入
+
+  ```java
+  public class JdbcDruidConfig{
+      @Bean
+      public DataSource dataSource(BookService bookService) {}
+  }
+  ```
+
+  引用类型的依赖注入只需要为这个配置bean的获取方法**设置形参**即可，**Spring容器会根据类型自动装配对象**。
 
 ## 二.SpringMVC
 
