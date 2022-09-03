@@ -8,6 +8,8 @@ Java开发者写程序必备的技能
 
 Spring技术是JavaEE开发的必备技能
 
+
+
 ### 1. 初识Spring
 
 Spring技术官网[https://spring.io](https://spring.io)
@@ -21,6 +23,8 @@ Spring已经成为了一种生态圈，Spring提供了若干的项目，每个�
 ​		Spring Cloud -分布式开发
 
 EJB思想演化而来，如今为Spring版本为5.0 支持JDK8及以上
+
+
 
 ### 2. Spring Framework系统架构
 
@@ -36,6 +40,8 @@ Spring Framework是Spring生态圈中最基础、最顶级的项目，是其他�
 * Aspects：AOP思想的实现。被Spring收录，因为他做的比Spring好，Spring也服气，也推荐你用这个。
 * Test：单元测试与集成测试。
 * Web：Web开发。
+
+
 
 ### 3. 核心概念
 
@@ -60,6 +66,8 @@ Spring Framework是Spring生态圈中最基础、最顶级的项目，是其他�
   * 使用IoC容器管理Bean(IoC)
   * 在IoC容器内将所有有依赖关系的Bean进行绑定(DI)
 * 最终效果：使用对象时，不仅可以直接从IoC容器中获取，并且还可以获取和已获取的Bean绑定了所有依赖关系的其他Bean
+
+
 
 ### 4.入门案例
 
@@ -149,6 +157,8 @@ Spring Framework是Spring生态圈中最基础、最顶级的项目，是其他�
 * property表示给当前的Bean配置属性，也就是给这个类的对象绑定关系
 * name属性表示 选择具体的 要绑定的 是类中的哪个成员变量对象 的名称
 * ref属性表示name选择的这个对象要参照的具体类型是什么，具体是哪一个bean，也就是另一个Bean的id属性
+
+
 
 ### 5.Bean
 
@@ -375,6 +385,8 @@ bean的生命周期的控制：在bean创建后到销毁前做的一些事情
 
       调用`ConfigurableApplicationContext`的`registerShutdownHook()`方法
 
+
+
 ### 6. DI 依赖注入
 
 向一个类中传递数据的方式：普通方法（set），构造方法
@@ -582,6 +594,8 @@ bean的生命周期的控制：在bean创建后到销毁前做的一些事情
    </property>
    ```
 
+
+
 ### 7. Spring管理第三方资源Bean案例
 
 如：Druid（阿里巴巴创建的数据库连接池）
@@ -667,6 +681,8 @@ bean的生命周期的控制：在bean创建后到销毁前做的一些事情
     <context:property-placeholder location="classpath*:*.properties"/>
     ```
 
+
+
 ### 8. IoC容器
 
 #### 8.1 创建容器
@@ -731,7 +747,9 @@ bean的生命周期的控制：在bean创建后到销毁前做的一些事情
 
   BeanFactory创建完毕后，所有的bean都是**延迟加载**，不会执行它的构造方法，ApplicationContext是Spring的核心接口，最常用，且为**立即加载**。
 
-### 9.注解开发
+
+
+### 9. 注解开发
 
 Spring2.0开始提供的方法，简化开发
 
@@ -861,7 +879,7 @@ Spring3.0开始升级了纯注解开发模式，使用java类替代配置文件�
 
   注：注入简单类型时，可不用再加@Autowired，一般这样的格式，都是为了配合外部的properties文件使用的
 
-* 在配置类上使用@PropertySource注解加载properties文件
+* 在配置类上使用**@PropertySource**注解加载properties文件
 
   ```java
   @Configuration
@@ -989,6 +1007,193 @@ Spring3.0开始升级了纯注解开发模式，使用java类替代配置文件�
   ```
 
   引用类型的依赖注入只需要为这个配置bean的获取方法**设置形参**即可，**Spring容器会根据类型自动装配对象**。
+
+
+
+### 10. Spring整合MyBatis(重点)
+
+曾经使用Mybatis时，是需要加载MyBatis的核心配置文件（mybatis-config.xml）的。
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <!--起别名-->
+    <typeAliases>
+        <package name="com.wyh.pojo"/>
+    </typeAliases>
+
+    <environments default="development">
+        <environment id="development">
+            <!--处理事务的类型-->
+            <transactionManager type="JDBC"/>
+            <!--数据源（数据库连接池）配置-->
+            <dataSource type="POOLED">
+                <property name="driver" value="com.mysql.cj.jdbc.Driver"/>
+                <property name="url" value="jdbc:mysql:///db1?useServerPrepStmts=true"/>
+                <property name="username" value="root"/>
+                <property name="password" value="xxxx"/>
+            </dataSource>
+        </environment>
+    </environments>
+    <mappers>
+        <!--扫描mapper-->
+        <package name="com.wyh.mapper"/>
+    </mappers>
+</configuration>
+```
+
+这很麻烦，每次都要复制粘贴这个文件。
+
+现在Spring整合Mybatis了，就可以省去这一步。
+
+* 首先，要省事，肯定要导入相应的坐标才行
+
+  ```xml
+          <dependency>
+              <groupId>org.springframework</groupId>
+              <artifactId>spring-context</artifactId>
+              <version>5.2.20.RELEASE</version>
+          </dependency>
+          <dependency>
+              <groupId>com.alibaba</groupId>
+              <artifactId>druid</artifactId>
+              <version>1.2.11</version>
+          </dependency>
+          <dependency>
+              <groupId>org.mybatis</groupId>
+              <artifactId>mybatis</artifactId>
+              <version>3.5.6</version>
+          </dependency>
+          <dependency>
+              <groupId>mysql</groupId>
+              <artifactId>mysql-connector-java</artifactId>
+              <version>8.0.30</version>
+          </dependency>
+          <dependency>
+              <groupId>org.springframework</groupId>
+              <artifactId>spring-jdbc</artifactId>
+              <version>5.2.20.RELEASE</version>
+          </dependency>
+          <dependency>
+              <groupId>org.mybatis</groupId>
+              <artifactId>mybatis-spring</artifactId>
+              <version>1.3.0</version>
+          </dependency>
+  ```
+
+  后面两个坐标是关键，一个具有处理jdbc事务的能力，一个是mybatis整合Spring的jar包，里面有相关的重要接口和类。
+
+* 然后，我们经过分析，mybatis里面需要放入IoC容器里面管理的bean，首先就有一个**SqlSessionFactory**。其次，我们是为了省去加载配置mybatis核心文件的步骤，那么我们需要把mybatis的核心配置文件转换成一个**配置类MyBatisConfig**。
+
+  ```java
+  public class MyBatisConfig {
+      @Bean
+      public SqlSessionFactoryBean sqlSessionFactory(DataSource dataSource) {
+          SqlSessionFactoryBean ssfb = new SqlSessionFactoryBean();
+          ssfb.setTypeAliasesPackage("com.wyh.pojo");
+          ssfb.setDataSource(dataSource);
+          return ssfb;
+      }
+  
+      @Bean
+      public MapperScannerConfigurer mapperScannerConfigurer() {
+          MapperScannerConfigurer msc = new MapperScannerConfigurer();
+          msc.setBasePackage("com.wyh.dao");
+          return msc;
+      }
+  }
+  ```
+
+  在经过分析，我们可以知道，除了SqlSessionFactory之外，**SqlSession**（映射对应的mapper执行对应的SQL功能）也是需要的，正好MyBatis整合Spring的包中，有提供便捷的**SqlSessionFactoryBean**和**MapperScanerConfigurer**。这两个就是快速创建SqlSessionFactory和SqlSession的。所以将这两个都放入IoC容器。我们**只需为他们添加关键的属性**即可。**如需要的实体类包的位置，和mapper层的类所在的包的位置**。对于SqlSessionFactory，我们通过Mybatis的核心配置文件可以知道，它**还需要一个dataSource**，所以这是一个依赖bean，需要我们也放入IoC容器，我们选择阿里巴巴的Druid，配置一个**JdbcConfig配置类**，里面配置mybatis所需要的关键信息（如数据库用户名密码以及访问哪个表)这些信息可以放在一个外部文件**jdbc.properties**中，然后SpringConfig加载即可。最后这个数据源dataSource属于第三方Bean的引用依赖，我们直接把他当成SqlSessionFactory的获取方法的参数即可，Spring自动装配。
+
+  ```java
+  public class JdbcConfig {
+      @Value("${jdbc.driver}")
+      private String driver;
+      @Value("${jdbc.url}")
+      private String url;
+      @Value("${jdbc.username}")
+      private String username;
+      @Value("${jdbc.password}")
+      private String password;
+  
+      @Bean
+      public DataSource dataSource() {
+          DruidDataSource ds = new DruidDataSource();
+          ds.setDriverClassName(driver);
+          ds.setUrl(url);
+          ds.setUsername(username);
+          ds.setPassword(password);
+          return ds;
+      }
+  }
+  ```
+
+  ```java
+  @Configuration
+  @ComponentScan("com.wyh")
+  @PropertySource("classpath:jdbc.properties")
+  @Import({JdbcConfig.class,MyBatisConfig.class})
+  public class SpringConfig {
+  }
+  ```
+
+* 这样也就整合完了Mybatis。然后我们就能和之前一样创建dao层，service层，dao层访问数据库，mapper接口里面写对应的注解类型的SQL，service层写业务逻辑。在此不再阐述。
+
+
+
+### 11.Spring整合JUnit
+
+* 使用Spring整合JUnit专用的类加载器
+
+  ```java
+  @RunWith(SpringJUnit4ClassRunner.class)
+  @ContextConfiguration(classes = SpringConfig.class)
+  public class TestAccountService {
+      @Autowired
+      private AccountService accountService;
+  
+      @Test
+      public void testSelectById() {
+          System.out.println(accountService.findById(1));
+      }
+  
+      @Test
+      public void testSelectAll() {
+          System.out.println(accountService.findAll());
+      }
+  }
+  ```
+
+  **@RunWith**：加载Spring整合JUnit的专用类加载器 SpringJUnit4ClassRunner.class
+
+  **@ContextConfiguration**：配置Spring的核心配置类，里面的属性名为**classes**
+
+  需要测试哪个层，那么就把那个层的对象设为属性，让Spring自动装配（Autowired），然后去调用里面的功能去测试即可。**@Test**还是需要的
+
+
+
+### 12. AOP 
+
+* AOP：Aspect Oriented Programming 面向切面编程，是一种编程范式，指导开发者如何组织程序结构，是编程思想
+* 作用：在**不惊动原始设计**的基础上，为其**进行功能增强**。
+* Spring理念：无入侵式/无侵入式功能增强
+* AOP是一个大的概念，很多地方都有
+* 核心概念：
+  * **连接点**（JoinPoint）：程序执行过程中的任意位置，可以是执行的方法，抛出异常，设置变量等
+    * 而在Spring中，AOP的连接点是：**方法的执行**，**也就是所有的方法**
+  * **切入点**（PointCut）：<u>匹配连接点</u>的式子
+    * 在Spring中，AOP的切入点是：**一个切入点可以描述一个具体方法，也可以匹配多个方法**，就是**具体匹配的一个或多个连接点**，也就是**需要增强功能的方法**
+      * 一个具体方法：com.wyh.dao包下的BookDao接口中的无形参无返回值的save方法
+      * 多个方法：所有的save方法，所有get开头的方法，所有以Dao结尾的接口中的任意方法，所有带有一个参数的方法
+      * 也就是**连接点们**
+  * **通知**（Advice）：在切入点处执行的操作（共性功能）
+    * 在Spring中，AOP的通知是：**以方法呈现的共性功能**
+  * **通知类**：内部定义通知的类
+  * **切面**（Aspect）：**描述通知与切入点的对应关系的东西**
 
 ## 二.SpringMVC
 
