@@ -1195,6 +1195,371 @@ Spring3.0开始升级了纯注解开发模式，使用java类替代配置文件�
   * **通知类**：内部定义通知的类
   * **切面**（Aspect）：**描述通知与切入点的对应关系的东西**
 
+#### 12.1 AOP入门案例
+
+* 导入AOP相关坐标
+
+  ```xml
+  <dependency>
+      <groupId>org.aspectj</groupId>
+      <artifactId>aspectjweaver</artifactId>
+      <version>1.9.4</version>
+  </dependency>
+  ```
+
+  注：spring-context坐标里依赖了spring-aop坐标，所以不需要导
+
+* 与之前一样要有Dao层类与实现，也就是要有连接点
+
+* 然后定义通知类，内部定义通知（共性功能）
+
+  ```java
+  public class MyAdvice {
+      public void method() {
+          System.out.println(System.currentTimeMillis());
+      }
+  }
+  ```
+
+* 定义切入点
+
+  ```java
+  public class MyAdvice {
+      public void method() {
+          System.out.println(System.currentTimeMillis());
+      }
+  
+      @Pointcut("execution(void com.wyh.dao.BookDao.update())")
+      private void pointCutFunc() {}
+  }
+  ```
+
+  注：切入点的定义，**依托于**一个不具有实际意义的方法，即一个**无参数无返回值无方法体逻辑的方法**，在上面添加**@Pointcut**注释，内填对需要连接的连接点的描述**execution（）**。说白了**这个注释才是切入点**，只是这个切入点不能单独存在，要依托于一个空壳方法
+
+* **绑定切入点与通知的关系，并指定通知添加到原始连接点的具体执行位置**
+
+  然后**定义这个通知类受Spring容器管理**（**@Component**），并**定义当前这个通知类为切面类**（**@Aspect**）
+
+  ```java
+  @Component
+  @Aspect
+  public class MyAdvice {
+      @Before("pointCutFunc()")
+      public void method() {
+          System.out.println(System.currentTimeMillis());
+      }
+  
+      @Pointcut("execution(void com.wyh.dao.BookDao.update())")
+      private void pointCutFunc() {}
+  }
+  ```
+
+* 开启Spring对AOP注解驱动支持（**@EnableAspectJAutoProxy**）
+
+  ```java
+  @Configuration
+  @ComponentScan("com.wyh")
+  @EnableAspectJAutoProxy
+  public class SpringConfig {
+  }
+  ```
+
+#### 12.2 AOP工作流程
+
+1. Spring容器启动
+2. 读取所有切面配置中被配置了的切入点
+3. 初始化bean，判断bean对应的类中的方法（连接点）是否匹配到任意切入点
+   * 如果匹配失败，那么**正常的创建bean对象**
+   * 然后获取这个bean，调用方法并执行，完成操作
+   * =====================================
+   * 如果匹配成功，那么创建这个bean（原始对象）也就是（**目标对象**）的**代理对象**
+   * 然后获取的bean是**代理对象**，**根据代理对象的运行模式**运行原式原始方法与增强内容，完成操作
+
+* 目标对象（Target）：原始功能去掉共性功能能之后对应的类产生的对象，这种对象是无法直接完成最终工作
+* 代理（Proxy）：目标对象无法直接完成工作，需要对其进行功能回填，通过原始对象的代理对象实现
+
+#### 12.3 AOP切入点表达式
+
+* 切入点：要进行增强的方法
+
+* 切入点表达式：要进行增强的方法的描述方式
+
+  ```java
+  execution(void com.wyh.dao.BookDao.update())//接口中的
+  或
+  execution(void com.wyh.dao.impl.BookDaoImpl.update())//实现类中的
+  ```
+
+  * 切入点表达式标准格式：
+
+    动作关键词（访问修饰符 返回值 包名.类名/接口名.方法名（参数）异常名）
+
+    * 动作关键词：描述切入点的行为动作，一般几乎都是**execution**，**表示执行到指定切入点**
+    * 访问修饰符：public等，**可省略**
+    * 异常名：方法定义中抛出指定的异常，**可省略**
+
+* 可以**使用通配符描述**切入点，快速描述
+
+  * （*）：单个独立的任意符号，可以独立出现，可作为前缀或后缀的匹配符
+
+    `execution(* com.wyh.*.BookDaoImpl.find*(*))`
+
+    匹配com.wyh包下的**任意包下的**BookDaoImpl类或接口中的**所有以find开头**的**带有一个任意类型参数**的方法
+
+  * （..）：多个连续的任意符号，可以独立出现，常用于简化包名与参数的书写
+
+    `execution(User com..UserService.findById(..))`
+
+    匹配com包下的**任意包中的**UserService类或接口中的**所有名为findById方法**，**参数任意**
+
+  * （+）：专用于匹配子类类型
+
+    `execution(* *..*Service+.*(..))`
+
+* 书写技巧与规则：
+
+  * 要按代码标准
+  * **切入点通常描述接口**，不描述实现类，降低耦合
+  * 一般都是public描述，也可省略
+  * 返回值的书写，对于增删改查则精准书写匹配，查询则*快速描述
+  * **常用*做单个包名的描述**，或者精准匹配
+  * **接口或类名与模块相关的，采用*匹配**，如UserService等，写为\*Service，绑定业务层接口名
+  * 方法名可以以动词开头，名词用*匹配，如getById，可以为getBy\*。selectAll就是selectAll
+  * 通常不使用异常作为匹配
+
+#### 12.4 AOP通知类型
+
+ AOP通知描述了抽取的共性功能，根据共性功能抽取的位置不同，最终运行代码时要将其加入到合理的位置
+
+AOP通知分为五类：
+
+* **@Before**（前置通知）：通知方法在切入点方法前运行
+
+  ```java
+  @Before("pointCutFuncOnUpdate()")
+  public void before() {
+  	System.out.println("advice before...");
+  }
+  ```
+
+* **@After**（后置通知）：通知方法在切入点方法后运行
+
+  ```java
+  @After("pointCutFuncOnUpdate()")
+      public void after() {
+          System.out.println("advice after...");
+      }
+  ```
+
+* **@Around**（环绕通知）（**重点掌握**）：通知方法在切入点方法前后运行，自定义位置
+
+  ```java
+      @Around("pointCutFuncOnSelect()")
+      public Object around(ProceedingJoinPoint pjp) throws Throwable {
+          System.out.println("around before advice...");
+          Object o = pjp.proceed();
+          System.out.println("around after advice...");
+          return o;
+      }
+  ```
+
+  注：环绕通知执行时，**原始连接点的方法内部执行**由**ProceedingJoinPoint类**的**对象调用proceed方法**执行，这个类要作为这个通知的参数。
+
+  **环绕通知，要有返回值**，哪怕是void类型，通配的返回值也要有，**一般返回值为Object**，如果连接点也有返回值，那么需要我们**手动返回这个返回值**，自己return，proceed方法有返回值，返回值就是原始连接点的执行后的返回值，我们**只需要返回这个procee的返回值即可**。**void则压根不会显示有返回值**，不用担心会出现null。同时**还需要我们抛出异常**，因为人家只是帮我们增强，不负责处理我们自己写的连接点的异常。
+
+* @AfterReturning（返回后通知）（了解）：通知方法在切入点方法正常执行完后运行
+
+  ```java
+      @AfterReturning("pointCutFuncOnSelect()")
+      public void afterReturning() {
+          System.out.println("afterReturning advice...");
+      }
+  ```
+
+* @AfterThrowing（抛出异常后通知）（了解）：通知方法在切入点方法抛出异常后运行
+
+  ```java
+      @AfterThrowing("pointCutFuncOnSelect()")
+      public void afterThrowing() {
+          System.out.println("afterThrowing advice...");
+      }
+  ```
+
+这些注解内的属性名为value，可省略不写，值为定义的**切入点空方法壳名称**，或通知类名.空方法壳名
+
+#### 12.5 案例：测量业务层接口万次执行效率
+
+```java
+@Around("pointcut()")
+    public void  around(ProceedingJoinPoint pjp) throws Throwable {
+        //获取执行时签名信息 -- 可获取执行的方法名 方法所属的类名 等等
+        Signature signature = pjp.getSignature();
+
+        long beginTime = new Date().getTime();
+        for (int i = 0; i < 10000; i++) {
+            pjp.proceed();
+        }
+        long endTime = new Date().getTime();
+        long time = endTime - beginTime;
+        System.out.println("执行一万次"+signature.getDeclaringTypeName()+"."+signature.getName()+"经历了:" + time + "ms");
+        //return pjp.proceed();
+    }
+```
+
+#### 12.6 AOP通知获取数据
+
+* 获取切入点方法的参数
+
+  * JointPoint：适用于前置、后置、返回后、抛出异常后通知
+
+  * **ProceedJointPoint**：适用于**环绕通知**
+
+    * JoinPoint对象描述了连接点方法的运行状态，可以获取到原始连接点的调用参数
+
+      ```java
+      @Before("pt()")
+      public void before(JoinPoint jp) {
+          Object[] args = jp.getArgs();
+          System.out.println(Arrays.toString(args));
+      }
+      ```
+
+    * ProceedJointPoint是JoinPoint的子类
+
+      ```java
+      @Around("pt()")
+      public Object around(ProceedJointPoint pjp) {
+          Object[] args = pjp.getArgs();
+          args[0] = 666;
+          Object o = pjp.proceed(args);
+          System.out.println(Arrays.toString(args));
+          return o;
+      }
+      ```
+
+      注：以上两个参数都必须是各自方法中的**第一位**
+
+* 获取切入点方法的返回值
+
+  * 用于返回后通知
+
+  * 或者**环绕通知**
+
+    * 返回后通知用形参接收返回值
+
+      ```java
+      @AfterReturning(value = "pt()",returning = "ret")
+      public void before(JoinPoint jp,Object ret) {
+          System.out.println(ret);
+      }
+      ```
+
+    * 环绕通知调用原始方法则就可以获取返回值
+
+      ```java
+      @Around("pt()")
+      public Object around(ProceedJointPoint pjp) {
+          Object[] args = pjp.getArgs();
+          Object o = pjp.proceed(args);
+          return o;
+      }
+      ```
+
+      
+
+* 获取切入点方法的运行异常信息(了解一下即可，在此不叙述了)
+
+  * 用于抛出异常后通知
+  * **环绕通知**
+
+#### 12.7 案例：百度网盘密码数据兼容处理
+
+不只是百度网盘，一些密码输入时，尾部多输入了空格，我们要做兼容处理，去掉这些多余空格
+
+在业务方法执行前对所有输入的参数进行格式处理：**trim()**
+
+使用处理后的参数再去调用原始方法->环绕通知
+
+
+
+### 13.Spring事务
+
+* 事务作用：在数据层保障一系列的数据库操作的同成功同失败
+
+* Spring事务作用：在数据层或**业务层**保障一系列的数据库操作的同成功同失败
+
+  ```java
+  public interface PlatformTransactionManager{
+      void commit(TransactionStatus status) trows TransactionException;
+      void rollback(TransactionStatus status) trows TransactionException;
+  }
+  ```
+
+  ```java
+  public class DataSourceTransactionManager{}
+  ```
+
+* 事务案例：银行转账
+
+  实现两个账户之间的转账操作
+
+  也就是A减钱，B加钱。
+
+  案例实现之后。发现一件事，当在两个独立的操作（A减钱，B加钱）之间若是出现了异常。使得之后的操作（B加钱）未成功，整体的业务就会失败，那就等着坐牢吧。
+
+  所以，Spring的事务可以帮我们解决这一问题，避免吃牢饭。
+
+1. 在业务层上添加Spring的事务管理
+
+   这是一个注解式事务
+
+   **@transactional**：通常添加在业务层接口中，不会添加在业务层实现类中，这是降低耦合。同时可以添加到业务方法上表示当前方法开启事务，也可以添加到接口上，表示当前接口所有方法都开启事务。
+
+   ```java
+   //@Transactional
+   public interface AccountService {
+       @Transactional
+       public void transfer(){}
+   }
+   ```
+
+2. 设置事务管理器
+
+   事务管理器要根据实现技术进行选择，如MyBatis框架使用的是JDBC的事务。
+
+   那么操作数据库的这些事务应当为JDBC事务，那么应该在MyBatis配置类中添加一个Bean
+
+   ```java
+   @Bean
+   public PlatformTransactionManager transactionManager(DataSource dataSource) {
+       DataSourceTransactionManager ptm = new DataSourceTransactionManager();
+       ptm.setDataSource(dateSource);
+       return ptm;
+   }
+   ```
+
+   这个**PlatformTransactionManager**是Spring提供的接口，**DataSourceTransactionManager**是Spring提供的实现类。DataSourceTransactionManager是实现JDBC事务的专用事务管理器，以后使用其他的事务管理器，只需要更改DataSourceTransactionManager，PlatformTransactionManager不需要更改。DataSourceTransactionManager还需要我们给它注入数据源**DataSource**，设为形参即可。
+
+3. 开启注解式事务驱动
+
+   也就是直接在Spring的核心配置类上加上注解**@EnableTransactionManagement**
+
+   ```java
+   @Configuration
+   @ComponentScan("com.wyh")
+   @PropertySource("classpath:jdbc.properties")
+   @Import({MyBatisConfig.class,DruidConfig.class})
+   @EnableTransactionManagement
+   public class SpringConfig {
+   }
+   ```
+
+   
+
+
+
+
+
 ## 二.SpringMVC
 
 ## 三.Maven高级
