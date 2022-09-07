@@ -1513,7 +1513,7 @@ AOP通知分为五类：
 
    这是一个注解式事务
 
-   **@transactional**：通常添加在业务层接口中，不会添加在业务层实现类中，这是降低耦合。同时可以添加到业务方法上表示当前方法开启事务，也可以添加到接口上，表示当前接口所有方法都开启事务。
+   **@Transactional**：通常添加在业务层接口中，不会添加在业务层实现类中，这是降低耦合。同时可以添加到业务方法上表示当前方法开启事务，也可以添加到接口上，表示当前接口所有方法都开启事务。
 
    ```java
    //@Transactional
@@ -1554,13 +1554,261 @@ AOP通知分为五类：
    }
    ```
 
-   
 
+#### 13.1 Spring事务角色
 
+一个调用数据库的dao层操作就会开启一个事务。
+
+**各个不同操作之间也就是开启了不同的事务**，所以当一系列操作中出现了异常，无法一起回滚数据。
+
+所以Spring的事务管理提出了解决：
+
+由Spring开启一个事务，其他的操作事务加入到这个事务中，Spring开启的这个事务叫事务管理员，而加入到这个Spring大事务的这些操作事务叫事务协调员。
+
+* 事务管理员：发起事务的一方。在Spring中通常指代业务层开启事务的方法。也就是有着@Transactional注解的方法。
+* 事务协调员：加入事务的一方。在Spring中通常指代数据层方法。也可以是业务层方法。**也就是可以是另一个事务管理员**。
+
+注：DataSourceTransactionManager注入的dataSource与我们MyBatis使用的dataSource是一致的，都是JDBC事务的。
+
+#### 13.2 Spring事务的相关配置
+
+属性：
+
+* readOnly：设置是否为只读事务。（readOnly=true 只读事务）
+
+* timeout：设置事务超时时间。（timeout=-1 永不超时）
+
+* **rollbackFor**：**设置事务回滚异常**。（rollbackFor={NullPointException.class}）这里填写的是类的字节码。因为有些异常他是不会回滚的，需要自己手动设置。
+
+* rollbackForName：设置事务回滚异常。（这里与上面一样，只不过这里写的是字符串格式）
+
+* noRollbackFor：设置事务不回滚异常。（noRollbackFor=NullPointException.class）
+
+* **propagation**：**设置事务传播行为**。（propagation=Propagation.REQUIRES_NEW）
+
+  * 传播属性取值：
+    * **REQUIRED（默认）**：设置这个值，事务管理员有事务T，事务协调员的事务则加入这个T。若事务管理员没事务，则事务协调员的事务自成一个事务T2。（也就是所有事务**都会成为一个事务**）
+    * **REQUIRES_NEW**：设置这个值，事务管理员有一个事务T。而事务协调员则会开启一个新的事务T2，自成一个另外的事务。若事务管理员没事务，那么事务协调员的事务也会成为一个新的事务。（也就是设置这个值之后，**不管事务管理员有没有事务，事务协调员的事务都和事务管理员的事务没有关系**）
+    * SUPPORTS：设置这个值，事务管理员有事务那么事务协调员的事务就加入这个事务。若事务管理员没事务，那么事务协调员也没有事务了。（也就是这是支持事务模式，有就加入事务管理员事务，没有则不成立事务）
+    * NOT_SUPPORTED：设置这个值，事务管理员有事务但事务协调员的事务也不加入这个事务，且不会成为事务。若事务管理员没事务，那么事务协调员也没有事务。（也就是这是不支持事务模式，有也不加入且不成为事务，没有就没有）
+    * MANDATORY：设置这个值，事务管理员有事务那么事务协调员的事务就加入这个事务。若事务管理员没事务，那么会报错。（也就是这是**必须有事务模式**，有就加入事务管理员事务，没有则报错）
+    * NEVER：设置这个值，事务管理员有事务就会报错。若事务管理员没事务，那么事务协调员也没有事务。（也就是这是**必须没有事务模式**，没有就没有，有就会报错）
+
+  * 案例：转账业务追加日志
+
+    * 需求：实现任意两个账户之间的转账操作，并要求对每次转账操作在数据库进行留痕。
+
+    * 分析：
+
+      1. 基于转账操作案例添加日志，实现数据库中记录日志
+      2. 业务层转账操作（transfer），调用减钱加钱与记录日志留痕。
+
+    * 实现效果预期：无论转账操作是否成功，均进行转账操作的日志留痕
+
+    * 存在的问题：日志记录与转账操作隶属于同一个事物，同成功同失败。
+
+    * **事务传播行为**：事务协调员对事务管理员所携带事务的处理态度。
+
+    * 一些实现细节：
+
+      * 这里的日志选择成为一张新表（tb_logForAccount），且这是一个业务操作（LogService）
+
+      * try-finall语句，finally必定执行。但报了异常就不会。
+
+      * 一个业务层接口的方法（LogService的log）可以为一个事务管理员，也可以是另一个事务管理员中的事务协调员
+
+      * 将当前时间格式转为自己想要的（如yyyy-mm-dd HH：mm：ss）字符串的实现语句：
+
+        ```java
+        String date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+        ```
+
+      * SQL语句中的VALUES中，填值除了#{date}，还可以填**now()**，获取当前时分秒时间。牛逼，新学一招。
 
 
 
 ## 二.SpringMVC
+
+### 1. SpringMVC简介
+
+**SpringMVC隶属于Spring技术**，是Spring技术的一部分。这里将其单独抽取出来做深度探讨。
+
+* 概述：SpringMVC技术与Servlet技术功能相同，均属于web层开发技术。
+
+  也就是简化Servlet的开发代码量，并且让其降低维护成本。（比如JavaWeb课程的最后一个大案例**JavaWeb_FinalCase**，里面的代码优化阶段的思想就是SpringMVC的模拟实现）
+
+  是一种**基于Java实现的MVC模型**的轻量级Web框架，用于表现层，**相当于替换了Servlet**。
+
+* 优点：
+
+  * 使用性强，开发相较于Servlet简便
+  * 灵活性强
+
+#### 1.1 SpringMVC入门案例
+
+1. 要使用那肯定是要先导入坐标了啊
+
+   **springmvc坐标** 与 servlet坐标（要设置依赖范围为provided）
+
+   spring-webmvc这个依赖中还依赖了spring的其他六个核心依赖，所以不用再导springframework的坐标了
+
+   ```xml
+   <dependency>
+         <groupId>org.springframework</groupId>
+         <artifactId>spring-webmvc</artifactId>
+         <version>5.2.10.RELEASE</version>
+   </dependency>
+   <dependency>
+         <groupId>javax.servlet</groupId>
+         <artifactId>javax.servlet-api</artifactId>
+         <version>3.1.0</version>
+         <scope>provided</scope>
+   </dependency>
+   ```
+
+2. 创建SpringMVC的表现层的控制类（也就是以前的servlet类，功能相同）
+
+   ```java
+   @Controller//将它定义为Spring的Bean，表现层用@Controller
+   public class UserController {
+       //设置当前操作的访问路径
+       @RequestMapping("/save")
+       //设置当前操作的返回值类型为响应体
+       @ResponseBody()
+       public String save() {
+           System.out.println("userController.save is running...");
+           return "{'module': 'springmvc'}";
+       }
+   }
+   ```
+
+3. SpringMVC技术属于Spring技术，还得加载Bean，所以要初始化SpringMVC的环境（同Spring环境），设定SpringMVC加载对应的bean
+
+   这也就是代替了之前的Spring的核心配置类SpringConfig
+
+   ```java
+   @Configuration
+   @ComponentScan("com.wyh.controller")
+   public class SpringmvcConfig {
+   }
+   ```
+
+4. 同时你要让web服务器知道你SpringMVC的配置，所以初始化Servlet容器（web服务器），加载SpringMVC环境，并设置SpringMVC技术处理的请求
+
+   ```java
+   public class TomcatConfig extends AbstractDispatcherServletInitializer {
+       //加载SpringMVC容器的配置
+       @Override
+       protected WebApplicationContext createServletApplicationContext() {
+           AnnotationConfigWebApplicationContext applicationContext = new AnnotationConfigWebApplicationContext();
+           applicationContext.register(SpringmvcConfig.class);//注册自己刚刚配置的SpringMVC环境
+           return applicationContext;
+       }
+   
+       //设置哪些请求归SpringMVC处理
+       @Override
+       protected String[] getServletMappings() {
+           return new String[]{"/"};//这个格式是管理所有请求
+       }
+   
+       //加载Spring容器的配置
+       @Override
+       protected WebApplicationContext createRootApplicationContext() {
+           return null;
+       }
+   }
+   ```
+
+* **@Controller**：设定SpringMVC的核心控制器bean（也就是相当于之前的**@Repository**和**@Service**）
+
+  ```
+  @Controller//将它定义为Spring的Bean，表现层用@Controller
+  public class UserController {
+  }
+  ```
+
+* **@RequestMapping**：**设置**当前控制器的某方法的**访问请求路径**（requestmapping翻译过来就是路径）
+
+  * 相关属性：value（默认）= 请求访问路径
+
+  ```java
+  @RequestMapping("/save")
+  public String save() {
+  }
+  ```
+
+* **@ResponseBody**：**设置**当前控制器的某方法**响应内容为当前方法返回值**，**无需解析**
+
+  ```java
+  @RequestMapping("/save")
+  //设置当前操作的返回值类型为响应体
+  @ResponseBody
+  public String save() {
+     System.out.println("userController.save is running...");
+     return "{'module': 'springmvc'}";
+  }
+  ```
+
+* SpringMVC的开发：
+
+  * 一次性工作：
+    * 创建工程，设置服务器，加载工程
+    * 导入坐标
+    * 创建web容器启动类，加载SpringMVC配置，并设置SpringMVC的请求拦截路径
+    * SpringMVC核心配置类（设置配置类，扫描controller包，加载Controller的bean）
+  * 多次工作：
+    * **定义处理请求的控制器类**
+    * 定义控制请求的的控制器方法，并配置映射路径（@RequestMapping）和返回JSON数据（@ResponseBody）
+
+* **AbstractDispatcherServletInitializer**类是SpringMVC提供的快速初始化Web3.0容器的抽象类
+
+  * 需要我们**自定义Web容器配置类并继承这个类**，且**重写实现三个方法**
+
+    * **createServletApplicationContext()**方法，创建Servlet容器时，加载SpringMVC对应的bean并放入WebApplicationContext对象的范围中，而WebApplicationContext的作用范围为ServletContext范围，继而为整个web容器范围。
+
+      ```java
+      protected WebApplicationContext createServletApplicationContext() {
+              AnnotationConfigWebApplicationContext applicationContext = new AnnotationConfigWebApplicationContext();
+              applicationContext.register(SpringmvcConfig.class);//注册自己刚刚配置的SpringMVC环境
+              return applicationContext;
+          }
+      ```
+
+    * **getServletMappings()**方法，设定SpringMVC对应的请求映射路径，设置为‘/’，表示拦截所有的请求，任意的请求都将转入到SpringMVC进行处理。
+
+      ```java
+          @Override
+          protected String[] getServletMappings() {
+              return new String[]{"/"};//这个格式是管理所有请求
+          }
+      ```
+
+    * **createRootApplicationContext()**方法，如果创建的Servlet容器需要加载非SpringMVC对应的bean，也就是Spring中的bean时，使用当前这个方法进行，使用方式与**createServletApplicationContext()**方法一致。
+
+      ```java
+      @Override
+          protected WebApplicationContext createRootApplicationContext() {
+              return null;
+          }
+      ```
+
+      
+
+
+
+### 2. 请求与响应
+
+
+
+### 3. REST风格
+
+
+
+### 4. SSM整合
+
+
+
+### 5. 拦截器
 
 ## 三.Maven高级
 
