@@ -1792,11 +1792,197 @@ AOP通知分为五类：
           }
       ```
 
-      
+
+#### 1.2 工作流程分析
+
+* 启动服务器初始化的过程
+  1. 服务器（Tomcat）启动，执行**继承AbstractDispatcherServletInitializer**的TomcatConfig类，初始化web容器
+  2. 执行里面的**createServletApplicationContext()**方法，创建WebApplicationContext对象，放入到了ServletContext中
+  3. 执行ServletApplicationContext.**register(SpringmvcConfig.class)**，加载SpringmvcConfig类
+  4. 执行@ComponentScan加载对应的bean（各个@Controller）
+  5. 加载UserController，每个@RequestMapping的内部值对应了一个具体的方法
+  6. 执行**getServletMappings()**方法，定义所有的请求都通过SpringMVC
+* 单次请求过程
+  1. 发送请求/localhost/save
+  2. web容器发现所有的请求都要经过SpringMVC，将请求交给了SpringMVC
+  3. SpringMVC解析请求路径（/save）
+  4. 知道了对应的方法是save()
+  5. 执行save（）
+  6. 检测到**@ResponseBody**，将save（）的返回值作为响应体响应返回给请求方
+
+#### 1.3 Controller的加载控制与Service/Dao的加载控制
+
+* SpringMVC控制表现层的bean（@Controller）
+
+* Spring控制业务层与数据层bean（@Service/@Repository）
+
+  * SpringMVC相关bean的加载控制：
+
+    * 都放在com.wyh.controller包内即可
+
+  * Spring相关bean的加载控制：
+
+    * 方式一：Spring加载bean的设定扫描范围为com.wyh，要排除掉controller包的bean
+
+      ```java
+      @ComponentScan(value="com.wyh",excludeFilters = @ComponentScan.Filter(
+              type = FilterType.ANNOTATION,
+              classes = Controller.class
+      ))
+      //这种方式在SpringBoot中会见到，用来控制加载的bean的细粒度。
+      ```
+
+    * 方式二：Spring加载的bean设定扫描范围为精准范围。如指定service包，dao包。
+
+      ```java
+      @ComponentScan({"com.wyh.service","com.wyh.dao"})
+      ```
+
+    * 方式三：不区分Spring与SpringMVC的环境，加载到同一环境。
+
+  * @ComponentScan的属性：
+
+    * excludeFilters：排除扫描路径中加载的某bean，需要指定类别（type）和具体项（classes）
+    * includeFilters：加载指定的bean，需要指定类别（type）和具体项（classes）
+
+* 对于web服务器（servlet容器）的**完整开发**应该是**即配置了Spring容器，又配置了SpringMVC容器**
+
+  * 完整开发：
+
+    ```java
+    public class TomcatConfig extends AbstractDispatcherServletInitializer {
+        //加载SpringMVC容器的配置
+        @Override
+        protected WebApplicationContext createServletApplicationContext() {
+            AnnotationConfigWebApplicationContext applicationContext = new AnnotationConfigWebApplicationContext();
+            applicationContext.register(SpringmvcConfig.class);
+            return applicationContext;
+        }
+    
+        //设置哪些请求归SpringMVC处理
+        @Override
+        protected String[] getServletMappings() {
+            return new String[]{"/"};//这个格式是管理所有请求
+        }
+    
+        //加载Spring容器的配置
+        @Override
+        protected WebApplicationContext createRootApplicationContext() {
+            AnnotationConfigWebApplicationContext applicationContext = new AnnotationConfigWebApplicationContext();
+            applicationContext.register(SpringConfig.class);
+            return applicationContext;
+        }
+    }
+    ```
+
+  * 简化开发（继承的换成了**AbstractAnnotationConfigDispatcherServletInitializer**）（掌握这个即可，但上面的原理要掌握）
+
+    ```java
+    public class TomcatConfig extends AbstractAnnotationConfigDispatcherServletInitializer {
+        @Override
+        protected Class<?>[] getRootConfigClasses() {
+            return new Class[]{SpringConfig.class};
+        }
+    
+        @Override
+        protected Class<?>[] getServletConfigClasses() {
+            return new Class[]{SpringmvcConfig.class};
+        }
+    
+        @Override
+        protected String[] getServletMappings() {
+            return new String[]{"/"};
+        }
+    }
+    ```
+
+#### 1.4 PostMan（邮差）
+
+* 是一款功能强大（吹牛的）的网页调试与发送网页HTTP请求的Chrome插件
+* 作用：常用于进行接口测试
+* 我直接用的网页版postman.com
+* 基本使用：
+  * 注册登录
+  * 创建工作空间/进入工作空间
+  * 发起请求测试即可（还可以保存这次请求测试）
 
 
 
 ### 2. 请求与响应
+
+#### 2.1 请求映射路径设置
+
+* 团队多人开发，每人设置的请求路径应当不同，**设置模块名作为请求路径的前缀**解决冲突问题
+
+* **@RequestMapping**：
+
+  * 既可以是**方法注解**也可以是**类注解**
+
+  * 属性为value，默认的
+
+  * 设置当前控制器的方法的请求路径，如果设置在类上，那么则是设置当前控制器所有方法的请求路径前缀
+
+    * 例如
+
+      ```java
+      @Controller
+      @RequestMapping("/user")//这里作为所有方法的前缀，访问时要加上这个前缀
+      public class UserController {
+          @RequestMapping("/save")
+          @ResponseBody
+          public String save() {...}
+      }
+      ```
+
+#### 2.2 请求方式
+
+* GET请求
+
+  * Get请求传参：
+
+    * 普通参数：url地址传参，地址参数名与要与方法形参变量名相同，定义形参即可接收参数
+
+      PostMan的请求路径：
+
+      ```
+      http://localhost:8080/SpringMVC/user/welcome?name=wyh&age=20
+      ```
+
+      ```java
+      @RequestMapping("/welcome")
+          @ResponseBody
+          public String welcome(String name, String age) {
+              System.out.println(name+"<===>"+age);
+              return "<h1>Welcome to access this web page</h1>" +
+                      "<p>welcome user "+name+"</p>" +
+                      "<p>your age is "+age+"</p>";
+          }
+      ```
+
+* POST请求
+
+  * Post请求参数：
+    * 普通参数：form表单post请求传参，表单参数名要与形参变量名相同，定义形参接收参数即可，又由于我们后端这个代码**不区分post和get**，比如javaWeb时，我们也是如果是post请求，直接调用get里面的方法即可。所以**定义一个操作方法带上参数，两个请求都可以使用**。在PostMan中发送post请求我们要在Body里选择x-www-form-urlencoded编写参数发送。
+
+  * Post请求中文乱码处理:
+
+    * 为Web容器添加过滤器并指定字符集，spring-web包中提供了专用的字符过滤器。直接在servlet容器（web服务器）中**重写getServletFilters()**方法，创建**CharacterEncodingFilter**对象，设置字符集为UTF-8，即可解决post的中文乱码问题。（get没有解决）
+
+      ```java
+      public class TomcatConfig extends AbstractAnnotationConfigDispatcherServletInitializer {
+      	...
+      
+          //解决post中文乱码
+          @Override
+          protected Filter[] getServletFilters() {
+              CharacterEncodingFilter filter = new CharacterEncodingFilter();
+              filter.setEncoding("UTF-8");
+              return new Filter[]{filter};
+          }
+      }
+      ```
+
+      注：PostMan中，要重新设置请求头（header）的Accept字段，值为`text/plain;charset=UTF-8`，否则中文会显示???（取消勾选之前的Accept）
 
 
 
