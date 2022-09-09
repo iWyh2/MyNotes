@@ -1910,7 +1910,9 @@ AOP通知分为五类：
 
 ### 2. 请求与响应
 
-#### 2.1 请求映射路径设置
+#### 2.1 请求
+
+##### 2.1.1 请求映射路径设置
 
 * 团队多人开发，每人设置的请求路径应当不同，**设置模块名作为请求路径的前缀**解决冲突问题
 
@@ -1934,7 +1936,7 @@ AOP通知分为五类：
       }
       ```
 
-#### 2.2 请求方式
+##### 2.1.2 请求方式
 
 * GET请求
 
@@ -1984,9 +1986,323 @@ AOP通知分为五类：
 
       注：PostMan中，要重新设置请求头（header）的Accept字段，值为`text/plain;charset=UTF-8`，否则中文会显示???（取消勾选之前的Accept）
 
+##### 2.1.3 请求参数
+
+* Get请求
+
+* 普通参数：url地址传参
+
+  * 地址参数名与形参变量名相同，定义形参即可接收参数
+
+  * 请求参数名与形参名不同时，使用@RequestParam绑定参数关系
+
+    ```java
+    @RequestMapping("/welcome")
+    @ResponseBody
+        public String welcome(@RequsetParam("name")String userName, String age) {
+            System.out.println(name+"<===>"+age);
+            return "<h1>Welcome to access this web page</h1>" +
+                    "<p>welcome user "+name+"</p>" +
+                    "<p>your age is "+age+"</p>";
+        }
+    ```
+
+    * **@RequsetParam**：用于绑定请求参数与处理器方法形参之间的关系，写在形参前面
+      * 参数属性：required（是否为必传参数）/defaultValue（参数默认值）
+
+* POJO参数：请求参数名与形参对象的属性名相同，定义POJO类型的形参即可接收参数
+
+  ```
+  public String pojoParam(User user) {}
+  ```
+
+  * POJO嵌套（POJO对象包含了另一个POJO对象）：请求参数名与形参对象的属性名相同，按照对象层次的结构关系传递参数（对象.属性名）这个对象的名称要与POJO类中的成员变量属性对象名一致。即可接收嵌套的POJO参数
+
+    ```
+    ?...&address.city=beijing&address.province=beijing
+    ```
+
+* 数组参数：请求参数名与形参数组参数名相同且请求个数为多个，定义一个数组形参，数组名与请求参数名一致，即可接收
+
+  ```java
+  public String arrayParam(String[] likes) {}
+  ```
+
+* 集合保存普通参数：请求参数名与形参集合对象名相同且请求个数为多个，用@RequestParam绑定参数关系，`**不用会报错：NoSuchMethodException: java.util.List.<init>()**`
+
+  ```java
+  public String listParam(@RequestParam List<String> likes) {}
+  ```
+
+* 总结：
+  * 对于简单类型：SpringMVC直接将请求参数与形参匹配
+  * 对于引用类型：SpringMVC将创建形参的引用类型对象，调用与请求参数匹配的get/set方法，没有用@RequestParam绑定的List集合也是如此，所以报错。
+  * 对于List集合，要用@RequestParam绑定与请求参数的关系，使Spring将数据注入到集合中
+
+* **传递JSON数据（重点）**
+
+  * 添加JSON数据转换的相应坐标
+
+    ```xml
+        <dependency>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-databind</artifactId>
+          <version>2.9.0</version>
+        </dependency>
+    ```
+
+  * 设置发送JSON格式数据（数组：[]，对象：{'': ''}）
+
+    在PostMan中，为请求体中写JSON数据（不管是Get还是Post都可以写请求体）。Body->raw->Text换JSON
+
+  * 开启自动转换JSON数据的支持（**@EnableWebMvc**）
+
+    ```java
+    @Configuration
+    @ComponentScan("com.wyh.controller")
+    @EnableWebMvc
+    public class SpringmvcConfig {
+    }
+    ```
+
+    **@EnableWebMvc**注解功能强大，整合了多个功能。
+
+  * 设置接收JSON数据（@RequestBody）
+
+    ```java
+    @RequestMapping("/welcome4")
+        @ResponseBody
+        public String welcome4(@RequestBody List<User> users) {
+            System.out.println(users);
+            return "<h1>Welcome to access this web page</h1>" +
+                    "<p>users is "+users+"</p>";
+        }
+    ```
+
+    **@RequestBody**：将请求体中的所包含的数据（JSON）传递给请求参数，此注解一个处理器方法只使用一次
+
+    * 传递POJO类型的JSON数据：json数据中的对应名称与形参对象的属性名相同，`@RequestBody User user`即可
+    * 传递POJO集合的JSON数据：json数组数据与集合泛型的属性名称相同，`@RequestBody List<User> users`即可
+
+* **@RequestBody**与**@RequsetParam**的区别：
+
+  * @RequestBody用于接收JSON数据（application/json）
+  * @RequsetParam用于接收url地址传参和表单传非JSON参数（application/x-www-form-urlencoded）
+  * 应用：**后期开发，以发送json格式数据为主（@RequestBody）**
+
+* 日期类型参数传递
+
+  * 根据不同的日期格式设置不同的接收方式，SpringMVC自动将String转Date类型
+
+    ```java
+    @RequestMapping("/date")
+    @ResponseBody
+    public String dateParam(Date date1,
+                           @DateTimeFormat(pattern="yyyy-MM-dd") Date date2,
+                           @DateTimeFormat(pattern="yyyy/MM/dd HH:mm:ss") Date date3) {
+        System.out.println(date1);
+        System.out.println(date2);
+        System.out.println(date3);
+            return "<h1>Welcome to access this web page</h1>" +
+                    "<p>date1 is "+date1+"</p>" +
+                	"<p>date2 is "+date2+"</p>" +
+                	"<p>date3 is "+date3+"</p>";
+    }
+    ```
+
+    **@DateTimeFormat**：设定日期时间型数据格式（pattern的值，时间日期格式字符串）
+
+* 类型转换器
+
+  * Converter接口
+
+    ```java
+    public interface Converter<S, T> {
+        @Nullable
+        T convert(S varl);
+    }
+    ```
+
+    Spring根据这个接口实现了许许多多的实现类，专门用于类型转换
+
+    年龄（String->Integer）日期（String->Date）
+
+    许多都会默认打开转换，若是无法转换，那么SpringMvcConfig配置类加上**@EnableWebMvc**
+
+#### 2.2 响应
+
+##### 2.2.1 响应页面
+
+```java
+@RequestMapping("/welcomePage")
+public String toPage() {
+    return "welcomePage.jsp";
+}
+```
+
+SpringMVC会自动认为这个格式下的返回值为一个页面，然后去寻找这个页面打开
+
+经过几小时试错修改，发现了跳转成功但页面资源不显示原因：
+
+```java
+@Controller
+//@RequestMapping("/user")这个响应页面的路径不能有前缀
+public class UserController {
+    //@RequestMapping("/users/toPage")不能有前缀
+    @RequestMapping("/toPage")//只能不加前缀才行
+    public String toPage() {
+        System.out.println("success");
+        return "Page.jsp";
+    }
+} 
+```
+
+##### 2.2.2 响应文本数据
+
+```java
+@RequestMapping("/toText")
+@ResponseBody
+public String toText() {
+    return "welcome text";
+}
+```
+
+如果不加**@ResponseBody**，那么还会认为是返回个页面，加上之后，会知道这是返回一个字符串，也就是文本数据
+
+##### 2.2.3 响应json数据（POJO，集合)（重点）
+
+```java
+@RequestMapping("/toJson")
+@ResponseBody
+public User toJsonPojo() {
+    User user = new User();
+    user.setName("wyh");
+    user.setAge(20)
+    return user;
+}
+...
+@RequestMapping("/toJsonList")
+@ResponseBody
+public List<User> toJsonList() {
+    User user1 = new User();
+    user1.setName("wyh");
+    user1.setAge(20);
+    User user2 = new User();
+    user2.setName("wyh");
+    user2.setAge(20);
+    List<User> users = new ArrayList<>();
+    users.add(user1);
+    users.add(user2);
+    return users;
+}
+```
+
+如果不加**@ResponseBody**，那么还会认为是返回个页面，加上之后，会知道这是返回一个User的POJO对象，再根据jackson-databind坐标导入的jar包，可以让SpringMVC**自动将POJO类转JSON格式字符串**并响应出去
+
+* **@ResponseBody：设置当前控制器方法的返回值作为响应体**，不加则作为页面
+
+* 响应的转换器：HttpMessageConverter接口
+
 
 
 ### 3. REST风格
+
+##### 3.1 REST风格简介
+
+* REST（Representational State Transfer）：表现形式状态转换
+  * 传统风格资源描述形式
+    * http://localhost/user/getById?id=1
+    * http://localhost/user/saveUser
+  * REST风格描述形式
+    * http://localhost/user/1
+    * http://localhost/user/
+* 优点：隐藏资源的访问行为，无法通过地址得知对资源是哪种操作，书写简化
+* 按照REST风格访问资源时使用**行为动作**区分对资源进行了哪种操作
+  * http://localhost/users -查询全部用户信息-GET请求（查询）
+  * http://localhost/users/1 -查询指定用户信息-GET请求（查询）
+  * http://localhost/users -添加用户信息-POST请求 （新增/保存）
+  * http://localhost/users -修改用户信息-PUT请求（修改/更新）
+  * http://localhost/users/1 -删除用户信息-DELETE（删除）
+    * 常用的请求方式：**GET**/**POST**/**PUT**/**DELETE**
+* 根据REST风格对资源进行访问成为**RESTful**（也就是拿REST风格进行开发）
+  * 上述行为为风格，不是规范，但现在都在使用，也和规范差不多了。
+  * 模块的名称通常使用复数，加上s，表示此类资源。（如users，books）
+
+##### 3.2 RESTful入门案例
+
+* 设定HTTP的请求动作（**GET**/**POST**/**PUT**/**DELETE**）
+
+  **@RequestMapping(value="/users", method=RequestMethod.POST)**
+
+  method属性为HTTP的请求动作
+
+* 设定请求参数（路径变量）（如/users/**1**的1）
+
+  ```java
+  @RequestMapping(value="/users/{id}", method=RequestMethod.DELETE)
+  @ResponseBody
+  public String delete(@PathVariable Integer id) {
+      ...
+  }
+  ```
+
+  **@PathVariable**：将路径上的变量给方法形参
+
+  value="/users/{id}"，id与形参名（id）一致
+
+* @RequestParam，@RequestBody，@PathVariable的区别与应用：
+
+  * @RequestParam：用于接收url地址传参或非json表单传参
+  * @RequestBody：用于接收JSON数据
+  * @PathVariable：用于接收路径参数，使用{形参名称}描述路径参数
+    * 后期开发，发送请求数超过一个，以JSON格式为主，@RequestBody应用较广
+    * 发送非json格式数据，用@RequestParam
+    * 采用RESTful开发，当参数数量较少，比如一个，用@PathVariable，常用于传递id值
+
+##### 3.3 REST快速开发
+
+Spring很通人性，知道很多重复步骤duck不必
+
+比如，@RequestMapping都要带上value=“/users”
+
+* 所以直接将它放在控制器类之上，成为前缀（/users）
+
+又比如，每个方法都要带上@ResponseBody
+
+* 所以也将它直接放在控制器类上
+
+此时呢，控制器类上都有@Controller和@ResponseBody
+
+* 所以用**@RestController**代替这两个注解，设置当前控制器类为RESTful风格，等于这两个注解的功能组合
+
+又由于剩下的每个方法之上的@RequestMapping内都有method取值，且都为RequestMethod的值
+
+* 所以Spring直接提供四类请求动作注解代替method属性取值（**@GetMapping，@POSTMapping，@PutMapping，@DeleteMapping**），设置当前控制器方法的请求访问路径与请求动作，内部可以取值，值为路径参数（如@GetMapping(“/{id})）
+
+* 最终呈现：
+
+  ```java
+  @RestController
+  @RequestMapping("/users")
+  public class UserController {
+      @GetMapping("/{id}")
+      public String getById(@PathVariable Integer id) {..}
+      
+      @PutMapping
+      public String update(@RequestBody User user) {..}
+      
+      @GetMapping()
+      public String getAll() {..}
+      
+      @PostMapping
+      public String save(@RequestBody User user) {..}
+      
+      @DeleteMapping("/{id}")
+      public String delete(@PathVariable Integer id) {..}
+  }
+  ```
+
+##### 3.4 案例：基于RESTful的页面数据交互
 
 
 
@@ -1995,6 +2311,10 @@ AOP通知分为五类：
 
 
 ### 5. 拦截器
+
+
+
+
 
 ## 三.Maven高级
 
