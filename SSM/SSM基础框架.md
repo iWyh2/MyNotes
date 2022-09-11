@@ -777,7 +777,8 @@ Spring2.0开始提供的方法，简化开发
   * **@Controller**：用于表现层bean定义
   * **@Service**：用于业务层bean定义
   * **@Repository**：用于数据层bean定义
-  * 注：功能与@Component一样，放便于我们理解
+  * 注1：功能与@Component一样，放便于我们理解
+  * 注2：**@Service** 是把 spring 容器中的 bean 进行实例化，也就是等同于 new 操作，只有 实现类 是可以进行 new 实例化的，而 接口 则不能，所以是**加在 实现类上**
 
 #### 9.2 纯注解开发
 
@@ -2304,19 +2305,504 @@ Spring很通人性，知道很多重复步骤duck不必
 
 ##### 3.4 案例：基于RESTful的页面数据交互
 
+* 先制作后台接口，以及数据测试
+
+  ```java
+  @RestController
+  @RequestMapping("/books")
+  public class BookController {
+      @PostMapping
+      public String save(@RequestBody Book book) {
+          System.out.println("insert into tb_books (name,type,description) values (" + book.getName() + "," + book.getType() + "," + book.getDescription() + ")");
+          return "{'model': 'book save success'}";
+      }
+  
+      @GetMapping
+      public List<Book> selectAll() {
+          System.out.println("select * form tb_books");
+          Book book1 = new Book();
+          Book book2 = new Book();
+          book1.setId(1);
+          book1.setName("《Java核心技术卷Ⅰ》");
+          book1.setType("Java/编程");
+          book1.setDescription("帮助巩固Java基础");
+          book2.setId(2);
+          book2.setName("《Java核心技术卷Ⅱ》");
+          book2.setType("Java/编程");
+          book2.setDescription("帮助深入Java学习");
+          List<Book> books = new ArrayList<>();
+          books.add(book1);
+          books.add(book2);
+          return books;
+      }
+  }
+  ```
+
+  测试交由Postman
+
+* 由于拦截路径设置的全部都被SpringMVC拦截，所以要重新放行静态资源。在config包下新建一个support包，新建SpringMvcSupport类，设置为配置类，继承**WebMvcConfigurationSupport**，设置访问路径（"/pages/**"）与对应静态资源的目录（"/pages/"）的关系，设置为交由Tomcat服务器处理。SpringMvcConfig要加载这个配置类。
+
+  ```java
+  @Configuration
+  public class SpringMvcSupport extends WebMvcConfigurationSupport {
+      @Override
+      protected void addResourceHandlers(ResourceHandlerRegistry registry) {
+          registry.addResourceHandler("/pages/**").addResourceLocations("/pages/");
+          registry.addResourceHandler("/js/**").addResourceLocations("/js/");
+          registry.addResourceHandler("/css/**").addResourceLocations("/css/");
+          registry.addResourceHandler("/plugins/**").addResourceLocations("/plugins/");
+      }
+  }
+  ...
+  @Configuration
+  @ComponentScan({"com.wyh.controller","com.wyh.config.support"})
+  @EnableWebMvc//开启JSON转换
+  public class SpringMvcConfig {
+  }
+  ```
+
+* 前端页面进行ajax异步请求，访问后台controller内的方法
+
+  ```javascript
+  				//添加
+                  saveBook () {
+                      axios.post("http://localhost:8080/RESTful/books",this.formData).then((res)=>{
+  
+                      });
+                  },
+  
+                  //主页列表查询
+                  getAll() {
+                      axios.get("http://localhost:8080/RESTful/books").then((res)=>{
+                          this.dataList = res.data;
+                      });
+                  },
+  ```
 
 
-### 4. SSM整合
+
+### 4. SSM整合（重点）
+
+#### 4.1 SSM整合
+
+* SSM整合流程
+  1. 创建工程
+  2. SSM整合
+     * Spring
+       * SpringConfig
+     * SpringMVC
+       * ServletConfig
+       * SpringMvcConfig
+     * MyBatis（Spring整合MyBatis）
+       * MybatisConfig
+       * JdbcConfig
+       * jdbc.properties
+  3. 功能模块
+     * 数据表/domain内的POJO类
+     * dao（接口与自动代理）（数据交互）
+     * service（接口与实现类）（业务逻辑）
+       * 业务接口测试（Spring整合JUnit）
+     * controller（请求与响应）（表现层）（RESTful）
+       * 表现层接口测试（Postman）
+
+#### 4.2 表现层数据封装
+
+开发前后端之间的协议，对于数据的处理，企业有自己的规定协议
+
+* 前端接收数据 —创建结果模型类
+
+* 封装数据到"data"属性中
+
+* 封装操作结果到"code"属性中
+
+* 封装特殊消息到"message"属性中
+
+* 后端设置统一数据返回结果类
+
+  ```java
+  public class Result{
+      private Object data;
+      private Integer code;
+      private String msg;
+  }
+  ```
+
+  * Result类中的字段并不固定，根据需要自定义，提供若干个构造方法，方便操作
+
+* 设置统一数据返回结果编码
+
+  ```java
+  public class Code{
+      public static final Integer SAVE_OK = 20011;
+      public static final Integer DELETE_OK = 20021;
+      public static final Integer UPDATE_OK = 20031;
+      public static final Integer SELECT_OK = 20041;
+  
+      public static final Integer SAVE_ERR = 20010;
+      public static final Integer DELETE_ERR = 20020;
+      public static final Integer UPDATE_ERR = 20030;
+      public static final Integer SELECT_ERR = 20040;
+  }
+  ```
+
+#### 4.3 异常处理器
+
+开发过程中不可避免会出现异常
+
+* 各种异常：
+
+  * 框架内部：因不合规使用
+  * 数据层：外部服务器故障（访问超时）
+  * 业务层：业务逻辑书写错误
+  * 表现层：数据收集、校验等规则错误
+  * 工具类：工具类的书写不严谨不健壮
+
+* **所有异常均抛到表现层集中处理**
+
+* 如果要每个方法单独书写的话，那你还是杀了我吧，所以**AOP思想**解决
+
+* SpringMVC早就知道你写不完也不可能自己写，所以人家提供了快捷处理方式（SpringMVC，你是我的神！）
+
+* **异常处理器**：集中，统一的处理项目中出现的异常
+
+  * ```java
+    @RestControllerAdvice
+    public class ProjectExceptionAdvice{
+        @ExceptionHandler(Exception.class)
+        public Result doException(Exception e) {
+            return new Result(6,null);
+        }
+    }
+    ```
+
+    **@RestControllerAdvice**：为REST开发的控制器类做增强，拥有@ResponseBody和@Component对应的功能
+
+    **@ExceptionHandler**：设定指定异常的处理方案，**功能等同于控制器方法**（**可以响应数据到前端**），出现异常后，终止原式控制器执行，转入当前方法执行。（**可以根据处理的异常不同，制作多个方法处理对应的异常**）
+
+#### 4.4 项目异常处理方案
+
+* 项目异常分类：
+  * 业务异常：
+    * 不规范用户操作行为产生的异常（流氓会Java）
+    * 规范的用户操作产生的异常
+  * 系统异常
+    * 项目运行中可预计且无法避免的异常
+  * 其他异常
+    * 编程时你压根想不到的异常
+  
+* 处理方案：
+  * 业务异常：发送消息给用户，提醒规范操作（让他别闹）
+  * 系统异常：
+    * 发送固定消息传递给用户，安抚用户
+    * 发送特定消息给运维人员，提醒维护
+    * 记录日志
+  * 其他异常：
+    * 发送固定消息传递给用户，安抚用户
+    * 发送特定消息给编程人员，提醒维护，并纳入可预期范围
+    * 记录日志
+  
+  1. 自定义系统异常
+  
+     ```java
+     public class SystemException extends RuntimeException{
+         private Integer code;
+     
+         public Integer getCode() {
+             return code;
+         }
+     
+         public void setCode(Integer code) {
+             this.code = code;
+         }
+     
+         public SystemException(Integer code, String message) {
+             super(message);
+             this.code = code;
+         }
+     
+         public SystemException(Integer code,String message, Throwable cause) {
+             super(message, cause);
+             this.code = code;
+         }
+     }
+     ```
+  
+  2. 自定义业务异常
+  
+     ```java
+     public class BusinessException extends RuntimeException{
+         private Integer code;
+     
+         public Integer getCode() {
+             return code;
+         }
+     
+         public void setCode(Integer code) {
+             this.code = code;
+         }
+     
+         public BusinessException(Integer code, String message) {
+             super(message);
+             this.code = code;
+         }
+     
+         public BusinessException(Integer code, String message, Throwable cause) {
+             super(message, cause);
+             this.code = code;
+         }
+     }
+     ```
+  
+  3. 自定义异常编码在Code类中
+  
+     ```java
+         public static final Integer SYSTEM_ERR = 50001;
+         public static final Integer BUSINESS_ERR = 50002;
+         public static final Integer UNKNOWN_ERR = 59999;
+     ```
+  
+  4. 触发自定义异常
+  
+     ```java
+         @Override
+         public Book selectById(Integer id) {
+             //模拟出现异常
+             if (id.equals(1)) {
+                 throw new BusinessException(Code.BUSINESS_ERR,"操作错误");
+             }
+             //将可能出现的异常进行包装，转换为自定义异常
+             try{
+                 int i = 1/0;
+             }catch (Exception e) {
+                 throw new SystemException(Code.SYSTEM_ERR,"服务器异常",e);
+             }
+             return bookDao.selectById(id);
+         }
+     ```
+  
+  5. 拦截并处理异常
+  
+     ```java
+     @RestControllerAdvice//为REST风格的控制器做增强功能的注解
+     public class ProjectExceptionAdvice{
+         @ExceptionHandler(SystemException.class)//异常处理器
+         public Result doSystemException(SystemException e) {
+             //记录日志
+             //发送消息给运维
+             //发送邮件给开发人员。e对象也发给开发人员
+             return new Result(e.getCode(),e.getMessage());
+         }
+     
+         @ExceptionHandler(BusinessException.class)//异常处理器
+         public Result doBusinessException(BusinessException e) {
+             return new Result(e.getCode(),e.getMessage());
+         }
+     
+         @ExceptionHandler(Exception.class)//处理其他未知异常
+         public Result doException(Exception e) {
+             //记录日志
+             //发送消息给运维
+             //发送邮件给开发人员。e对象也发给开发人员
+             return new Result(Code.UNKNOWN_ERR,"系统繁忙，请稍后再试");
+         }
+     }
+     ```
+
+#### 4.5 案例：SSM整合标准开发
+
+连接上页面之后，页面的异步请求与相应后续操作（JavaWeb有讲，Vue、AXIOS、Element-ui）
+
+```javascript
+axios.get("/books").then(resp=>{});
+axios.get("/books/"+row.id).then(resp=>{});
+axios.post("/books",this.formData).then(resp=>{});
+axios.put("/books",this.formData).then(resp=>{});
+axios.delete("/books/"+row.id).then(resp=>{});
+```
 
 
 
 ### 5. 拦截器
 
+#### 5.1 拦截器概念
 
+* 拦截器（Interceptor）：在SpringMVC容器内的，一种动态拦截方法调用的机制
+* 作用：
+  * 在指定方法的调用前后执行预先设定的代码
+  * **阻止原始方法的执行**（是否有权限）
+* 过滤器：属于web容器层的三大组件之一，过滤请求是对静态资源还是动态资源的访问
+* 拦截器与过滤器的区别：
+  * 归属不同：Filter属于Servlet技术，Interceptor属于SpringMVC技术
+  * 拦截内容不同：Filter在Web服务器对所有访问进行拦截，Interceptor在SpringMVC容器仅针对对SpringMVC的访问进行增强
+
+#### 5.2 入门案例
+
+1. 制作拦截器功能类
+
+   声明拦截器的bean，并实现HandlerInterceptor接口。拦截器一般是给controller用的
+
+   ```java
+   @Component
+   public class ProjectInterceptor implements HandlerInterceptor {
+       @Override
+       public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+           System.out.println("preHandle...");
+           return true;
+       }
+   
+       @Override
+       public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
+           System.out.println("postHandle...");
+       }
+   
+       @Override
+       public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+           System.out.println("afterCompletion...");
+       }
+   }
+   ```
+
+   ```java
+   @Override
+       public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+           System.out.println("preHandle...");
+           return true;
+       }
+       //这个方法返回 false -》 即为不通过，不放心，只执行控制器方法之前的操作，也就是阻止了了控制器方法的执行
+   	//true 为放行
+   ```
+
+2. 配置拦截器的执行位置
+
+   定义配置类，继承WebMvcConfigurationSupport，实现addInterceptor方法，添加拦截的访问路径，路径可以设置多个
+
+   ```java
+   @Configuration
+   public class SpringMvcSupport extends WebMvcConfigurationSupport {
+       @Autowired
+       private ProjectInterceptor projectInterceptor;
+   
+       @Override
+       protected void addResourceHandlers(ResourceHandlerRegistry registry) {
+           registry.addResourceHandler("/pages/**").addResourceLocations("/pages/");
+           registry.addResourceHandler("/js/**").addResourceLocations("/js/");
+           registry.addResourceHandler("/css/**").addResourceLocations("/css/");
+           registry.addResourceHandler("/plugins/**").addResourceLocations("/plugins/");
+           registry.addResourceHandler("/element-ui/**").addResourceLocations("/element-ui/");
+       }
+   
+       @Override
+       protected void addInterceptors(InterceptorRegistry registry) {
+           registry.addInterceptor(projectInterceptor).addPathPatterns("/books","/books/*");
+       }
+   }
+   ```
+
+* 省去创建SpringMvcSupport配置类的简化开发：
+
+  ```java
+  @Configuration
+  @ComponentScan({"com.wyh.controller"/*,"com.wyh.config.support"*/})
+  @EnableWebMvc
+  public class SpringMvcConfig implements WebMvcConfigurer {
+      @Autowired
+      private ProjectInterceptor projectInterceptor;
+  
+      @Override
+      public void addInterceptors(InterceptorRegistry registry) {
+          registry.addInterceptor(projectInterceptor).addPathPatterns("/books","/books/*");
+      }
+  
+      @Override
+      public void addResourceHandlers(ResourceHandlerRegistry registry) {
+          registry.addResourceHandler("/pages/**").addResourceLocations("/pages/");
+          registry.addResourceHandler("/js/**").addResourceLocations("/js/");
+          registry.addResourceHandler("/css/**").addResourceLocations("/css/");
+          registry.addResourceHandler("/plugins/**").addResourceLocations("/plugins/");
+          registry.addResourceHandler("/element-ui/**").addResourceLocations("/element-ui/");
+      }
+  }
+  ```
+
+  让SpringMvcConfig配置类实现Spring的接口WebMvcConfigurer，重写相应的方法即可。侵入性较强，和Spring强绑定了。
+
+* 执行流程：
+
+  ```
+  请求 => preHandle => (看return的返回值)
+  									=> return true  => controller   => postHandle => afterCompletion =>...
+  									=> return false => (直接跳过conroller postHandle afterCompletion) =>...
+  ```
+
+#### 5.3 拦截器参数
+
+* 前置拦截处理：
+
+  ```java
+  public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {}
+  ```
+
+  * 参数：
+    * request：请求对象
+    * response：响应对象
+    * handler：被调用的控制器方法，本质上是一个方法对象，对反射技术的Method对象进行了再包装。
+  * 返回值：返回值若为false，被拦截的处理器（控制器）将不再执行
+
+* 后置拦截处理：
+
+  ```java
+  public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {}
+  ```
+
+  * 参数：
+    * modelAndView：如果处理器执行完成具有返回结果，可以读取到对应的数据与页面信息。并进行调整。（也就是用于页面响应或跳转的）
+
+* 完成后拦截处理：
+
+  ```java
+  public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {}
+  ```
+
+  * 参数：
+    * ex：如果处理器执行过程中出现了异常对象，可以针对异常进行单独处理。（但是我们已经有了异常处理器，这个就用处不大了）
+
+#### 5.4 拦截器工作流程分析
+
+* 多拦截器执行顺序：当配置多个拦截器时，形成拦截器链（了解即可）
+* 拦截器链的运行顺序参照烂机器的添加顺序为准（在addInterceptor方法中的添加顺序）（进栈原理，先进后出）
+* 当拦截器中出现对原始处理器的拦截，后面的拦截器均终止运行
+* 当拦截器运行中断（return false），仅运行配置在前面的拦截器的afterCompletion操作
 
 
 
 ## 三.Maven高级
+
+### 1. 分模块开发与设计
+
+#### 1.1 分模块发开意义
+
+* 将原始模块**按照功能拆分成若干个子模块**，方便模块之间的相互调用，接口共享
+  * 如，SSM案例的各个包，对应各个功能层，可分为，ssm_controller，ssm_dao，ssm_domain模块等等
+
+### 2. 依赖管理
+
+
+
+### 3. 聚合与继承
+
+
+
+### 4. 属性管理
+
+
+
+### 5. 多环境配置与应用
+
+
+
+### 6. 私服
+
+
 
 ## 四.SpringBoot
 
