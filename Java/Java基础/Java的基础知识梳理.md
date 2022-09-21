@@ -1,4 +1,4 @@
-# Java的一些基础知识梳理
+# Java的基础知识梳理
 
 ## 1. Java的特性
 
@@ -67,7 +67,7 @@ Java也有这样的写法，但不推荐。
 * 静态方法只能访问静态的成员
 * 实例方法可以访问静态的也可以访问实例的成员
 * 静态方法中不可以有this
-* 饿汉单例设计模式（已经存在了）
+* 饿汉单例设计模式（已经造好了）
 * 懒汉单例设计模式（需要时再创建）
 
 
@@ -123,14 +123,20 @@ Java也有这样的写法，但不推荐。
 
 
 
-## 12. Java的封装
+## 12. Java的重载
+
+* 一个类中，多个方法名相同，但形参列表不同，则为重载方法
+
+
+
+## 13. Java的封装
 
 * 用于正确设计对象的属性和方法
 * 原则：对象代表什么，就要封装对应的数据，并提供对应的行为
 
 
 
-## 13. Java的继承
+## 14. Java的继承
 
 * ```java
   格式：
@@ -165,7 +171,7 @@ Java也有这样的写法，但不推荐。
 
 
 
-## 14. Java的抽象类
+## 15. Java的抽象类
 
 * ```java
   格式：
@@ -193,9 +199,9 @@ Java也有这样的写法，但不推荐。
   ```java
   public abstract class Student{
       public final void write() {
-          ...
+          ...//已经写好的逻辑内容
           this.writeMain();
-          ...
+          ...//已经写好的逻辑内容
       }
       
       public abstract String writeMain();
@@ -204,7 +210,7 @@ Java也有这样的写法，但不推荐。
 
 
 
-## 15. Java的接口
+## 16. Java的接口
 
 * JDK-8之前的老接口格式：
 
@@ -269,7 +275,7 @@ Java也有这样的写法，但不推荐。
 
 
 
-## 16. Java的多态
+## 17. Java的多态
 
 * 同类型的对象执行同一个行为，会表现出不同的行为特征
 
@@ -297,7 +303,7 @@ Java也有这样的写法，但不推荐。
 
 
 
-## 17. Java的内部类
+## 18. Java的内部类
 
 * 内部类就是**定义在一个类里面的类**
 
@@ -385,11 +391,131 @@ Java也有这样的写法，但不推荐。
     * 使用形式：
 
       * **作为方法的实际参数进行传输**，可省去创建父类引用，直接new传参
-      * 
+  
+* 编译之后的文件：**外部类$数字.class**
 
-    * 编译之后的文件：**外部类$数字.class**
 
 
+## 19. Java的Lambda表达式
+
+* JDK-8开始的新语法格式
+
+* 作用：简化匿名内部类的代码写法
+
+* 简化格式：
+
+  ```java
+  (匿名内部类被重写方法的形参列表) -> {
+      //被重写的方法的方法体
+  }
+  ```
+
+* Lambda**只能简化函数式接口**的匿名内部类
+
+* **函数式接口：接口，有且仅有一个抽象方法**。可在该接口上加@FunctionalInterface注解，表示这必须是个函数式接口
+
+* ->：是语法，无实际意义
+
+* 如：
+
+  ```java
+  @FunctionalInterface
+  interface Swimming{
+      void swim();
+  }
+  void goSwim(Swimming swimming){}
+  ...
+  public static void main(String[] args) {
+      goSwim(new Swimming(){
+          @Override
+          void swim() {
+              System.out,print("swim so fast");
+          }
+      });
+      //-------下面为相同效果的Lambda简化--------
+      goSwim(() -> {
+              System.out,print("swim so fast");
+          });
+  }
+  ```
+
+* 省略写法（在简化的基础之上继续简化）
+
+  * 参数类型可以省略不写
+
+  * **只有一个参数**，那么可以**省略参数类型与小括号()**
+
+  * 被重写方法的**方法体只有一行代码，省略大括号和分号**
+
+  * 被重写方法的**方法体只有一行return语句，省略大括号、return、分号**
+
+  * 就算没有参数也还是要写上小括号()
+
+  * 如：
+
+    ```java
+    @FunctionalInterface
+    interface Swimming{
+        String swim(String);
+    }
+    void goSwim(Swimming swimming){}
+    ...
+    public static void main(String[] args) {
+        goSwim(new Swimming(){
+            @Override
+            String swim(String s) {
+                System.out,print("swim so fast");
+            }
+        });
+        //-------下面为相同效果的Lambda简化--------
+        goSwim(s -> {
+                System.out.print("swim so fast");
+            });
+        //-------继续简化--------
+        goSwim(s->System.out.print("swim so fast"));
+        
+        //----------------------------------
+        goSwim(new Swimming(){
+            @Override
+            String swim(String) {
+                return "我不会游泳";
+            }
+        });
+        //------等于---------
+        goSwim(s->"我不会游泳");
+    }
+    ---------------------------------------
+    Arrays.sort(args, new Comparator<Integer>(){
+        @Override
+        public int compare(Integer o1,Integer o2) {
+            return o1 - o2;
+        }
+    });
+               //等于
+    Arrays.sort(args,(o1,o2)->o1 - o2);
+    ```
+
+
+
+## 20. Java的常用API
+
+* Object类：
+  * toString()：默认返回对象在堆内存里的地址信息
+    * 重写，以便看到对象内容
+  * equals()：默认比较当前对象与另一个对象的地址是否相同
+    * 完全可以直接用“==”比较两个引用地址是否相同（也就是比较对象地址是否相同）
+    * 子类重写父类equals，自定义equals的比较规则（如比较两个对象内容是否相同）
+* Objects类：
+  * （static）equals(o1,o2)：**进行了非null检验**，更安全（阿里巴巴开发手册曾有，若用Object的equals，调用者必须为非null）会调用对象重写的equals方法
+  * （static）isNull(o)：判断变量是否为空（就是return o==null）
+* StringBuilder类（可变字符串类，是一种手段工具，最终还是要变回String类型）：
+  * 构造器方法：StringBuilder() 创建空白可变的字符串对象/StringBuilder(String str) 创建指定内容的可变字符串对象
+  * **append(任意类型)**：添加数据并返回StringBuilder对象本身 -> 可以链式编程
+  * reverse()：将对象的内容反转
+  * length()：返回对象内容长度
+  * toString()：把StringBuilder转换为String
+* String类：
+  * 
 
 
 

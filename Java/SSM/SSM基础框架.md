@@ -100,7 +100,7 @@ Spring Framework是Spring生态圈中最基础、最顶级的项目，是其他�
 * 在配置文件中配置需要的Bean对象：
 
   ```
-  <bean class="com.wyh.dao.impl.BookDaoImpl" id="bookDao"/>
+  <bean class="com.wyh.dao.BookDao" id="bookDao"/>
   <bean class="com.wyh.service.impl.BookServiceImpl" id="bookService"/>
   ```
 
@@ -110,14 +110,13 @@ Spring Framework是Spring生态圈中最基础、最顶级的项目，是其他�
 
 * ```java
   //获取IoC容器
-  ApplicationContext applicationContext = new ClassPathXmlApplicationContext
-      ("applicationContext.xml");
+  ApplicationContext applicationContext = new ClassPathXmlApplicationContext("applicationContext.xml");
   //获取Bean对象
   BookDao bookDao = (BookDao) applicationContext.getBean("bookDao");
   //执行对应的方法
   bookDao.save();
   ```
-
+  
   * 配置文件名叫applicationContext.xml就是因为这个Spring提供的接口就叫ApplicationContext，它的实现类为ClassPathXmlApplicationContext
   * 然后调用getBean方法，参数为前面配置的id属性
 
@@ -132,7 +131,7 @@ Spring Framework是Spring生态圈中最基础、最顶级的项目，是其他�
 
 ##### 4.2.2 案例实现
 
-1. 删去上个IoC案例中的service层的，以new形式创建的Dao对象
+1. 删去上个IoC案例中的service层的，以new形式创建的Dao对象，使有关系的对象成为对象属性
 
    ```java
    private BookDao bookDao;
@@ -154,8 +153,8 @@ Spring Framework是Spring生态圈中最基础、最顶级的项目，是其他�
    </bean>
    ```
 
-* property表示给当前的Bean配置属性，也就是给这个类的对象绑定关系
-* name属性表示 选择具体的 要绑定的 是类中的哪个成员变量对象 的名称
+* property表示给当前的Bean配置属性，也就是**给这个类的对象绑定关系**
+* name属性表示 选择具体的 要绑定的 是类中的哪个**成员变量对象** 的名称
 * ref属性表示name选择的这个对象要参照的具体类型是什么，具体是哪一个bean，也就是另一个Bean的id属性
 
 
@@ -172,7 +171,7 @@ Spring Framework是Spring生态圈中最基础、最顶级的项目，是其他�
 
 * 所属：beans标签
 
-* 功能：定义Spring的核心容器管理的对象
+* 功能：定义Spring的核心容器管理的**对象**
 
 * 格式：
 
@@ -183,13 +182,11 @@ Spring Framework是Spring生态圈中最基础、最顶级的项目，是其他�
   </beans>
   ```
 
-  
-
 * 属性列表：
   * id：bean的id，使用容器可以通过id值获取对应的bean，在一个容器中id值唯一
-  * class：bean的类型，配置bean的全路径类名
+  * class：bean的类型，配置bean的**全路径类名**
 
-##### 5.1.2 Bean的别名配置
+##### 5.1.2 Bean的别名配置（了解）
 
 * 属性名称：name
 
@@ -203,7 +200,7 @@ Spring Framework是Spring生态圈中最基础、最顶级的项目，是其他�
   <bean class="com.wyh.service.impl.BookServiceImpl" id="bookService" name="service serviceEBi"/>
   ```
 
-* 注意事项：获取bean时，无论是通过id还是name，如果无法获取，那么会抛出异常：NoSuchBeanDefinitionException，找不到这个名字的bean，也就是名字写错了
+* 注意事项：获取bean时，无论是通过id还是name，如果无法获取，那么会抛出异常：**NoSuchBeanDefinitionException**，找不到这个名字的bean，也就是名字写错了
 
 ##### 5.1.3 Bean的作用范围
 
@@ -215,7 +212,7 @@ Spring Framework是Spring生态圈中最基础、最顶级的项目，是其他�
 
   * 取值：
     * singleton：单例（默认）
-    * prototype：非单例
+    * prototype（单词意为 范例）：非单例
 
 * 如：
 
@@ -241,7 +238,7 @@ Spring Framework是Spring生态圈中最基础、最顶级的项目，是其他�
 
    bean的本质就是一个对象，所以创建bean使用构造方法来完成
 
-   也就是必须要有**无参构造器**在所管理的Bean的类中，必须是无参，**自定义无参或者默认无参都可以**
+   也就是**必须要有无参构造器**在所管理的Bean的类中，必须是无参，**自定义无参或者默认无参都可以**
 
    如果无参构造器不存在，会报**BeanCreationException**
 
@@ -254,7 +251,7 @@ Spring Framework是Spring生态圈中最基础、最顶级的项目，是其他�
    ```java
    public class OrderDaoFactory {
        public static OrderDao getOrderDao() {
-           return new OrderDaoImpl();
+           return new OrderDao();
        }
    }
    ```
@@ -275,7 +272,7 @@ Spring Framework是Spring生态圈中最基础、最顶级的项目，是其他�
    ```java
    public class UserDaoFactory {
        public UserDao getUserDao() {
-           return new UserDaoImpl();
+           return new UserDao();
        }
    }
    ```
@@ -296,14 +293,14 @@ Spring Framework是Spring生态圈中最基础、最顶级的项目，是其他�
 
    但由此发现了很多鸡肋，比如配置了一个无用`<bean>`，后面的factory-bean和factory-method每次都要更改，不是很方便，由此，Spring对其优化，将这个实例工厂方法改良
 
-4. 实例工厂—改良升级版（实用）
+4. **实例工厂—改良升级版（实用）**
 
    定义这个工厂类时，需要实现Spring提供的接口**FactoryBean**，且这是个泛型，要指定这个工厂获取的bean对象是哪一类，还要至少重写其里面的三个方法中的前两个，获取bean对象，获知bean对象类型，指定是否为单例创建（此方法可不重写，默认为true，也就是默认为单例创建，需要非单例时才重写并改为false）
 
    ```java
    public class UserDaoFactoryBean implements FactoryBean<UserDao> {
        public UserDao getObject() throws Exception {
-           return new UserDaoImpl();
+           return new UserDao();
        }
        public Class<?> getObjectType() {
            return UserDao.class;
@@ -334,7 +331,7 @@ bean的生命周期的控制：在bean创建后到销毁前做的一些事情
 * 自己提供生命周期的控制方法
 
   ```java
-  public class BookDaoImpl implements BookDao {
+  public class BookDao {
       ...
       public void init() {}
       public void destory() {}
@@ -416,11 +413,15 @@ bean的生命周期的控制：在bean创建后到销毁前做的一些事情
 
   ```xml
   <bean class="com.wyh.service.impl.BookServiceImpl" id="bookService">
-          <property name="bookDao" ref="bookDao"/>
+          <property name="bookDao" ref="bookDao"/><!--配置依赖注入属性-->
   </bean>
   ```
 
   注：可配置多个property标签，内置多个引用类型
+  
+  * property表示给当前的Bean配置属性，也就是**给这个类的对象绑定关系**
+  * name属性表示 选择具体的 要绑定的 是类中的哪个**成员变量对象** 的名称
+  * ref属性表示name选择的这个对象要参照的具体类型是什么，具体是哪一个bean，也就是另一个Bean的id属性
 
 #### 6.2 setter注入-简单类型
 
@@ -443,6 +444,8 @@ bean的生命周期的控制：在bean创建后到销毁前做的一些事情
   ```
 
   Spring会自动给你转换数据类型
+  
+  * value：就是想要注入的简单类型的值
 
 #### 6.3 构造器注入-引用类型（了解）
 
@@ -506,7 +509,7 @@ bean的生命周期的控制：在bean创建后到销毁前做的一些事情
 
 #### 6.5 依赖注入的方式选择
 
-1. 强制依赖 使用构造器进行，使用setter注入会有概率不进行注入导致null对象出现
+1. 强制依赖使用构造器进行，使用setter注入会有概率不进行注入导致null对象出现
 2. 可选依赖使用setter注入进行，灵活性强
 3. Spring框架倡导使用构造器注入，因为严谨
 4. 有必要时可以两种一起搭配使用
@@ -632,9 +635,9 @@ bean的生命周期的控制：在bean创建后到销毁前做的一些事情
   ```xml
   <beans xmlns="http://www.springframework.org/schema/beans"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xmlns:context="http://www.springframework.org/schema/context"
+         xmlns:context="http://www.springframework.org/schema/context"<!--增加的命名空间-->
          xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-                             http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+                             http://www.springframework.org/schema/context 							   			http://www.springframework.org/schema/context/spring-context.xsd">                                                           
   ```
 
 * 使用context命名空间，加载指定的properties文件
@@ -759,7 +762,7 @@ Spring2.0开始提供的方法，简化开发
 
   ```java
   @Component("bookDao")//给bean起了id名称
-  public class BookDaoImpl implements BookDap{}
+  public class BookDao {}
   @Component//未起id名
   public class BookServiceImpl implements BookService{}
   ```
@@ -782,7 +785,7 @@ Spring2.0开始提供的方法，简化开发
 
 #### 9.2 纯注解开发
 
-Spring3.0开始升级了纯注解开发模式，使用java类替代配置文件。
+Spring3.0开始升级了纯注解开发模式，使用**java类替代配置文件**。
 
 * java类代替Spring的核心配置文件applicationContext.xml，建议新创建一个包叫config专门放置配置类
 
@@ -792,7 +795,7 @@ Spring3.0开始升级了纯注解开发模式，使用java类替代配置文件�
   public class SpringConfig{}
   ```
 
-  注：**@Configuration**注解用于设定当前类为配置类
+  注：**@Configuration**注解用于设定当前类为**配置类**
 
   ​		**@ComponentScan**注解用于设定扫描路径，此注解只能添加一次，多个包需要扫描，则用字符串数组格式
 
@@ -817,7 +820,7 @@ Spring3.0开始升级了纯注解开发模式，使用java类替代配置文件�
   ```java
   @Repository
   @Scope("singleton")
-  public class BookDaoImpl implements BookDao{}
+  public class BookDao {}
   ```
 
 ##### 9.3.2 bean生命周期
@@ -1108,7 +1111,7 @@ Spring3.0开始升级了纯注解开发模式，使用java类替代配置文件�
   }
   ```
 
-  在经过分析，我们可以知道，除了SqlSessionFactory之外，**SqlSession**（映射对应的mapper执行对应的SQL功能）也是需要的，正好MyBatis整合Spring的包中，有提供便捷的**SqlSessionFactoryBean**和**MapperScanerConfigurer**。这两个就是快速创建SqlSessionFactory和SqlSession的。所以将这两个都放入IoC容器。我们**只需为他们添加关键的属性**即可。**如需要的实体类包的位置，和mapper层的类所在的包的位置**。对于SqlSessionFactory，我们通过Mybatis的核心配置文件可以知道，它**还需要一个dataSource**，所以这是一个依赖bean，需要我们也放入IoC容器，我们选择阿里巴巴的Druid，配置一个**JdbcConfig配置类**，里面配置mybatis所需要的关键信息（如数据库用户名密码以及访问哪个表)这些信息可以放在一个外部文件**jdbc.properties**中，然后SpringConfig加载即可。最后这个数据源dataSource属于第三方Bean的引用依赖，我们直接把他当成SqlSessionFactory的获取方法的参数即可，Spring自动装配。
+  再经过分析，我们可以知道，除了SqlSessionFactory之外，**SqlSession**（映射对应的mapper执行对应的SQL功能）也是需要的，正好MyBatis整合Spring的包中，有提供便捷的**SqlSessionFactoryBean**和**MapperScanerConfigurer**。这两个就是快速创建SqlSessionFactory和SqlSession的。所以将这两个都放入IoC容器。我们**只需为他们添加关键的属性**即可。**如需要的实体类包的位置，和mapper层的类所在的包的位置**。对于SqlSessionFactory，我们通过Mybatis的核心配置文件可以知道，它**还需要一个dataSource**，所以这是一个依赖bean，需要我们也放入IoC容器，我们选择阿里巴巴的Druid，配置一个**JdbcConfig配置类**，里面配置mybatis所需要的关键信息（如数据库用户名密码以及访问哪个表)这些信息可以放在一个外部文件**jdbc.properties**中，然后SpringConfig加载即可。最后这个数据源dataSource属于第三方Bean的引用依赖，我们直接把他当成SqlSessionFactory的获取方法的参数即可，Spring自动装配。
 
   ```java
   public class JdbcConfig {
@@ -1142,7 +1145,7 @@ Spring3.0开始升级了纯注解开发模式，使用java类替代配置文件�
   }
   ```
 
-* 这样也就整合完了Mybatis。然后我们就能和之前一样创建dao层，service层，dao层访问数据库，mapper接口里面写对应的注解类型的SQL，service层写业务逻辑。在此不再阐述。
+* 这样也就整合完了Mybatis。然后我们就能和之前一样创建dao层，service层。dao层访问数据库，mapper接口里面写对应的注解类型的SQL，service层写业务逻辑。在此不再阐述。
 
 
 
@@ -1169,7 +1172,7 @@ Spring3.0开始升级了纯注解开发模式，使用java类替代配置文件�
   }
   ```
 
-  **@RunWith**：加载Spring整合JUnit的专用类加载器 SpringJUnit4ClassRunner.class
+  **@RunWith**：加载Spring整合JUnit的专用类加载器 **SpringJUnit4ClassRunner.class**
 
   **@ContextConfiguration**：配置Spring的核心配置类，里面的属性名为**classes**
 
@@ -1181,13 +1184,13 @@ Spring3.0开始升级了纯注解开发模式，使用java类替代配置文件�
 
 * AOP：Aspect Oriented Programming 面向切面编程，是一种编程范式，指导开发者如何组织程序结构，是编程思想
 * 作用：在**不惊动原始设计**的基础上，为其**进行功能增强**。
-* Spring理念：无入侵式/无侵入式功能增强
+* Spring理念：无入侵式/无侵入式 功能增强
 * AOP是一个大的概念，很多地方都有
 * 核心概念：
   * **连接点**（JoinPoint）：程序执行过程中的任意位置，可以是执行的方法，抛出异常，设置变量等
     * 而在Spring中，AOP的连接点是：**方法的执行**，**也就是所有的方法**
   * **切入点**（PointCut）：<u>匹配连接点</u>的式子
-    * 在Spring中，AOP的切入点是：**一个切入点可以描述一个具体方法，也可以匹配多个方法**，就是**具体匹配的一个或多个连接点**，也就是**需要增强功能的方法**
+    * 在Spring中，AOP的切入点是：**一个切入点可以描述一个具体方法，也可以匹配多个方法**，就是**具体匹配的一个或多个连接点**，也就是**需要增强功能的方法**，是一个注解，注解内描述需要增强的连接点
       * 一个具体方法：com.wyh.dao包下的BookDao接口中的无形参无返回值的save方法
       * 多个方法：所有的save方法，所有get开头的方法，所有以Dao结尾的接口中的任意方法，所有带有一个参数的方法
       * 也就是**连接点们**
@@ -1255,7 +1258,7 @@ Spring3.0开始升级了纯注解开发模式，使用java类替代配置文件�
   }
   ```
 
-* 开启Spring对AOP注解驱动支持（**@EnableAspectJAutoProxy**）
+* **开启Spring对AOP注解驱动支持**（**@EnableAspectJAutoProxy**）
 
   ```java
   @Configuration
@@ -1270,10 +1273,10 @@ Spring3.0开始升级了纯注解开发模式，使用java类替代配置文件�
 1. Spring容器启动
 2. 读取所有切面配置中被配置了的切入点
 3. 初始化bean，判断bean对应的类中的方法（连接点）是否匹配到任意切入点
-   * 如果匹配失败，那么**正常的创建bean对象**
+   * 如果**匹配失败**，那么**正常的创建bean对象**
    * 然后获取这个bean，调用方法并执行，完成操作
    * =====================================
-   * 如果匹配成功，那么创建这个bean（原始对象）也就是（**目标对象**）的**代理对象**
+   * 如果**匹配成功**，那么创建这个bean（原始对象）也就是（**目标对象**）的**代理对象**
    * 然后获取的bean是**代理对象**，**根据代理对象的运行模式**运行原式原始方法与增强内容，完成操作
 
 * 目标对象（Target）：原始功能去掉共性功能能之后对应的类产生的对象，这种对象是无法直接完成最终工作
@@ -1479,7 +1482,7 @@ AOP通知分为五类：
 
 在业务方法执行前对所有输入的参数进行格式处理：**trim()**
 
-使用处理后的参数再去调用原始方法->环绕通知
+使用处理后的参数再去调用原始方法->**环绕通知**
 
 
 
@@ -1558,22 +1561,22 @@ AOP通知分为五类：
 
 #### 13.1 Spring事务角色
 
-一个调用数据库的dao层操作就会开启一个事务。
+一个调用数据库的dao层操作方法就会开启一个事务。
 
-**各个不同操作之间也就是开启了不同的事务**，所以当一系列操作中出现了异常，无法一起回滚数据。
+**各个不同操作方法之间也就是开启了不同的事务**，所以当一系列操作中出现了异常，无法一起回滚数据。
 
 所以Spring的事务管理提出了解决：
 
 由Spring开启一个事务，其他的操作事务加入到这个事务中，Spring开启的这个事务叫事务管理员，而加入到这个Spring大事务的这些操作事务叫事务协调员。
 
-* 事务管理员：发起事务的一方。在Spring中通常指代业务层开启事务的方法。也就是有着@Transactional注解的方法。
-* 事务协调员：加入事务的一方。在Spring中通常指代数据层方法。也可以是业务层方法。**也就是可以是另一个事务管理员**。
+* **事务管理员**：发起事务的一方。在Spring中通常指代业务层开启事务的方法。也就是**有着@Transactional注解的方法**。
+* **事务协调员**：加入事务的一方。在Spring中通常指代数据层方法。也可以是业务层方法。**也就是可以是另一个事务管理员**。
 
 注：DataSourceTransactionManager注入的dataSource与我们MyBatis使用的dataSource是一致的，都是JDBC事务的。
 
 #### 13.2 Spring事务的相关配置
 
-属性：
+@Transactional的属性：
 
 * readOnly：设置是否为只读事务。（readOnly=true 只读事务）
 
@@ -1606,9 +1609,11 @@ AOP通知分为五类：
 
     * 实现效果预期：无论转账操作是否成功，均进行转账操作的日志留痕
 
-    * 存在的问题：日志记录与转账操作隶属于同一个事物，同成功同失败。
+    * 存在的问题：日志记录与转账操作隶属于同一个事务，同成功同失败。
 
     * **事务传播行为**：事务协调员对事务管理员所携带事务的处理态度。
+
+    * 所以用@Transactional的属性Propagation的REQUIRES_NEW
 
     * 一些实现细节：
 
@@ -1619,11 +1624,11 @@ AOP通知分为五类：
       * 一个业务层接口的方法（LogService的log）可以为一个事务管理员，也可以是另一个事务管理员中的事务协调员
 
       * 将当前时间格式转为自己想要的（如yyyy-mm-dd HH：mm：ss）字符串的实现语句：
-
+    
         ```java
         String date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
         ```
-
+    
       * SQL语句中的VALUES中，填值除了#{date}，还可以填**now()**，获取当前时分秒时间。牛逼，新学一招。
 
 
@@ -1651,7 +1656,7 @@ AOP通知分为五类：
 
    **springmvc坐标** 与 servlet坐标（要设置依赖范围为provided）
 
-   spring-webmvc这个依赖中还依赖了spring的其他六个核心依赖，所以不用再导springframework的坐标了
+   spring-webmvc这个依赖中还依赖了spring的其他六个核心依赖，所以不用再导springframework的spring-context坐标了
 
    ```xml
    <dependency>
@@ -1685,12 +1690,12 @@ AOP通知分为五类：
 
 3. SpringMVC技术属于Spring技术，还得加载Bean，所以要初始化SpringMVC的环境（同Spring环境），设定SpringMVC加载对应的bean
 
-   这也就是代替了之前的Spring的核心配置类SpringConfig
+   这也就是代替了之前的Spring的核心配置类SpringConfig（这俩是可以同时存在的，且Spring容器是父类容器）
 
    ```java
    @Configuration
    @ComponentScan("com.wyh.controller")
-   public class SpringmvcConfig {
+   public class SpringMvcConfig {
    }
    ```
 
@@ -1702,7 +1707,7 @@ AOP通知分为五类：
        @Override
        protected WebApplicationContext createServletApplicationContext() {
            AnnotationConfigWebApplicationContext applicationContext = new AnnotationConfigWebApplicationContext();
-           applicationContext.register(SpringmvcConfig.class);//注册自己刚刚配置的SpringMVC环境
+           applicationContext.register(SpringMvcConfig.class);//注册自己刚刚配置的SpringMVC环境
            return applicationContext;
        }
    
@@ -1720,9 +1725,9 @@ AOP通知分为五类：
    }
    ```
 
-* **@Controller**：设定SpringMVC的核心控制器bean（也就是相当于之前的**@Repository**和**@Service**）
+* **@Controller**：设定SpringMVC的核心控制器bean（也就是相当于之前的**@Repository**和**@Service**）为表现层bean
 
-  ```
+  ```java
   @Controller//将它定义为Spring的Bean，表现层用@Controller
   public class UserController {
   }
@@ -1770,7 +1775,7 @@ AOP通知分为五类：
       ```java
       protected WebApplicationContext createServletApplicationContext() {
               AnnotationConfigWebApplicationContext applicationContext = new AnnotationConfigWebApplicationContext();
-              applicationContext.register(SpringmvcConfig.class);//注册自己刚刚配置的SpringMVC环境
+              applicationContext.register(SpringMvcConfig.class);//注册自己刚刚配置的SpringMVC环境，创建SpringMVC容器
               return applicationContext;
           }
       ```
@@ -1788,7 +1793,7 @@ AOP通知分为五类：
 
       ```java
       @Override
-          protected WebApplicationContext createRootApplicationContext() {
+          protected WebApplicationContext createRootApplicationContext() {//创建Spring容器
               return null;
           }
       ```
@@ -1799,7 +1804,7 @@ AOP通知分为五类：
 * 启动服务器初始化的过程
   1. 服务器（Tomcat）启动，执行**继承AbstractDispatcherServletInitializer**的TomcatConfig类，初始化web容器
   2. 执行里面的**createServletApplicationContext()**方法，创建WebApplicationContext对象，放入到了ServletContext中
-  3. 执行ServletApplicationContext.**register(SpringmvcConfig.class)**，加载SpringmvcConfig类
+  3. 执行ServletApplicationContext.**register(SpringmvcConfig.class)**，加载SpringMvcConfig类
   4. 执行@ComponentScan加载对应的bean（各个@Controller）
   5. 加载UserController，每个@RequestMapping的内部值对应了一个具体的方法
   6. 执行**getServletMappings()**方法，定义所有的请求都通过SpringMVC
@@ -1900,7 +1905,7 @@ AOP通知分为五类：
 #### 1.4 PostMan（邮差）
 
 * 是一款功能强大（吹牛的）的网页调试与发送网页HTTP请求的Chrome插件
-* 作用：常用于进行接口测试
+* 作用：常用于进行**表现层接口测试**
 * 我直接用的网页版postman.com
 * 基本使用：
   * 注册登录
@@ -1965,7 +1970,7 @@ AOP通知分为五类：
 * POST请求
 
   * Post请求参数：
-    * 普通参数：form表单post请求传参，表单参数名要与形参变量名相同，定义形参接收参数即可，又由于我们后端这个代码**不区分post和get**，比如javaWeb时，我们也是如果是post请求，直接调用get里面的方法即可。所以**定义一个操作方法带上参数，两个请求都可以使用**。在PostMan中发送post请求我们要在Body里选择x-www-form-urlencoded编写参数发送。
+    * 普通参数：form表单post请求传参，表单参数名要与形参变量名相同，定义形参接收参数即可，又由于我们后端这个代码**不区分post和get**，比如javaWeb时，我们也是如果是post请求，直接调用get请求里面的方法即可。所以**定义一个操作方法带上参数，两个请求都可以使用**。在PostMan中发送post请求我们要在Body里选择x-www-form-urlencoded编写参数发送。
 
   * Post请求中文乱码处理:
 
@@ -2013,7 +2018,7 @@ AOP通知分为五类：
 
 * POJO参数：请求参数名与形参对象的属性名相同，定义POJO类型的形参即可接收参数
 
-  ```
+  ```java
   public String pojoParam(User user) {}
   ```
 
@@ -2029,7 +2034,7 @@ AOP通知分为五类：
   public String arrayParam(String[] likes) {}
   ```
 
-* 集合保存普通参数：请求参数名与形参集合对象名相同且请求个数为多个，用@RequestParam绑定参数关系，`**不用会报错：NoSuchMethodException: java.util.List.<init>()**`
+* 集合保存普通参数：请求参数名与形参集合对象名相同且请求个数为多个，用@RequestParam绑定参数关系，`不用会报错：NoSuchMethodException: java.util.List.<init>()`
 
   ```java
   public String listParam(@RequestParam List<String> likes) {}
@@ -2066,7 +2071,7 @@ AOP通知分为五类：
     }
     ```
 
-    **@EnableWebMvc**注解功能强大，整合了多个功能。
+    **@EnableWebMvc**注解功能强大，整合了多个功能，在此包含了转换JSON。
 
   * 设置接收JSON数据（@RequestBody）
 
@@ -2099,15 +2104,15 @@ AOP通知分为五类：
     @RequestMapping("/date")
     @ResponseBody
     public String dateParam(Date date1,
-                           @DateTimeFormat(pattern="yyyy-MM-dd") Date date2,
-                           @DateTimeFormat(pattern="yyyy/MM/dd HH:mm:ss") Date date3) {
+    	@DateTimeFormat(pattern="yyyy-MM-dd") Date date2,
+        @DateTimeFormat(pattern="yyyy/MM/dd HH:mm:ss") Date date3) {
         System.out.println(date1);
         System.out.println(date2);
         System.out.println(date3);
-            return "<h1>Welcome to access this web page</h1>" +
-                    "<p>date1 is "+date1+"</p>" +
-                	"<p>date2 is "+date2+"</p>" +
-                	"<p>date3 is "+date3+"</p>";
+        return "<h1>Welcome to access this web page</h1>" +
+               "<p>date1 is "+date1+"</p>" +
+               "<p>date2 is "+date2+"</p>" +
+               "<p>date3 is "+date3+"</p>";
     }
     ```
 
@@ -2152,8 +2157,8 @@ public class UserController {
     //@RequestMapping("/users/toPage")不能有前缀
     @RequestMapping("/toPage")//只能不加前缀才行
     public String toPage() {
-        System.out.println("success");
-        return "Page.jsp";
+    System.out.println("success");
+    return "Page.jsp";
     }
 } 
 ```
@@ -2168,7 +2173,7 @@ public String toText() {
 }
 ```
 
-如果不加**@ResponseBody**，那么还会认为是返回个页面，加上之后，会知道这是返回一个字符串，也就是文本数据
+如果不加**@ResponseBody**，那么还会认为是返回个页面，加上之后，Spring会知道这是返回一个字符串，也就是文本数据
 
 ##### 2.2.3 响应json数据（POJO，集合)（重点）
 
@@ -2383,7 +2388,7 @@ Spring很通人性，知道很多重复步骤duck不必
 
 ### 4. SSM整合（重点）
 
-#### 4.1 SSM整合
+#### 4.1 SSM整合（基于Spring/SpringMVC）
 
 * SSM整合流程
   1. 创建工程
@@ -2468,7 +2473,7 @@ Spring很通人性，知道很多重复步骤duck不必
   * ```java
     @RestControllerAdvice
     public class ProjectExceptionAdvice{
-        @ExceptionHandler(Exception.class)
+        @ExceptionHandler(Exception.class)//异常处理器注解
         public Result doException(Exception e) {
             return new Result(6,null);
         }
@@ -2668,7 +2673,7 @@ axios.delete("/books/"+row.id).then(resp=>{});
            System.out.println("preHandle...");
            return true;
        }
-       //这个方法返回 false -》 即为不通过，不放心，只执行控制器方法之前的操作，也就是阻止了了控制器方法的执行
+       //这个方法返回 false -》 即为不通过，不放行，只执行控制器方法之前的操作，也就是阻止了了控制器方法的执行
    	//true 为放行
    ```
 
@@ -2784,26 +2789,1397 @@ axios.delete("/books/"+row.id).then(resp=>{});
 * 将原始模块**按照功能拆分成若干个子模块**，方便模块之间的相互调用，接口共享
   * 如，SSM案例的各个包，对应各个功能层，可分为，ssm_controller，ssm_dao，ssm_domain模块等等
 
+#### 1.2 分模块开发
+
+1. 创建Maven项目。经过我多次尝试，总结出一个规律问题，IDEA创建新项目时，它一个文件就是一个模块，不是项目文件。所以，我们创建项目时，应当先有一个主目录为项目目录，存放之后创建的一个个模块，不然在项目里创建的模块会在第一个创建的模块里面。
+2. 书写模块代码。针对模块功能进行设计，不是创建完工程再一个一个拆分
+3. **写完一个模块**，我们就要通过maven指令（**Install**），**安装这个模块到本地仓库**（localRepository）。团队内部开发需要发布模块功能到团队内部可共享的仓库中去（**私服**）。不安装找不到，Maven是从仓库里面找这个模块的包的。
+
 ### 2. 依赖管理
 
+* 依赖指项目所需要的各样的jar包。一个项目可有多个依赖
 
+#### 2.1 依赖传递
+
+* 依赖具有传递性
+  * 直接依赖：在当前模块直接在pom文件写了坐标建立的依赖关系
+  * 间接依赖：被依赖的资源也依赖了其他的资源，当前项目间接依赖其他资源（直接依赖里面的其他依赖资源）
+
+#### 2.2 依赖冲突问题
+
+* 路径优先：依赖中出现了相同的资源，层级越深，优先级越低，层级越浅，优先级越高（直接大于间接）（就近原则）
+* 声明优先：资源在相同层级被依赖，配置顺序靠前的覆盖配置顺序靠后的（先写的就是老大）
+* 特殊优先：配置了相同资源的不同版本，后配置的覆盖先配置的（后写的才是老大）
+
+#### 2.3 可选依赖
+
+* 对外隐藏当前所依赖的资源（不透明）。隐藏后对应的资源将不具有依赖传递性。其他模块将不知道你用没用，且用不到
+* 在项目的某个资源依赖坐标（dependency）中加上`<optional>true</optional>`即可对外隐藏这个资源(false为可见，true不可见)
+* 场景是，这个**模块被别人用**，有些资源不想被别人知道
+
+#### 2.4 排除依赖
+
+* 主动断开依赖的资源，被排除的资源无需指定版本（不需要）
+* 也就是依赖了一个资源，这个资源里依赖了一个你不需要的资源，那么手动排除他，在这个资源的依赖坐标（dependency）中加上`<exclusions><exclusion></exclusion></exclusions>`，加上对应的不需要的资源工组名与项目名即可，无需指定版本，
+* 场景是，**使用别人资源，且不想要里面依赖的某种资源**
 
 ### 3. 聚合与继承
 
+####  3.1 聚合
 
+* 聚合：将多个模块组织成一个整体，同时进行项目构建的过程
+
+* 聚合工程：通常是一个不具有业务功能的空工程，有且仅有一个pom文件
+
+* 作用：使用聚合工程将多个工程编组，通过对聚合工程进行构建，实现对所包含的模块进行同步构建
+  * 当工程中某个模块发生更新时，必须保障工程中与已更新模块关联的其他模块同步更新。
+  * 使用聚合工程解决批量模块的同步构建问题
+  
+* 聚合工程开发
+
+  * 创建空maven模块，设置打包类型为pom
+
+    ```xml
+    <groupId>com.wyh</groupId>
+    <artifactId>SSM_Totalpom</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    ```
+
+    普通为jar web为war
+
+  * 设置当前聚合工程所包含的子模块名称
+
+    ```xml
+    <modules>
+            <module>../SSM</module>
+            <module>../SSM_domain</module>
+            <module>../SSM_dao</module>
+    </modules>
+    ```
+
+    聚合工程中所包含的模块在进行构建时，会根据模块间的依赖关系设置构建顺序，与书写顺序无关
+
+    参与聚合的工程，无法向上感知是否参与聚合，只能向下配置哪些模块参与本工程的聚合
+
+#### 3.2 继承
+
+* 继承：描述两个工程间的关系，与Java的继承类似，子工程可以继承父工程的配置信息，常见于依赖关系的继承
+
+* 作用：简化配置，减少版本冲突
+
+* 继承与聚合一起出现
+
+* 开发
+
+  * 在父工程中配置所有子工程都需要的配置信息，共用坐标全部放在这
+
+  * 在父工程中配置可选依赖关系
+
+    ```xml
+    <dependencyManagement>
+    	<dependecies>
+        	<dependency>
+            	<gruopId></gruopId>
+                <artifactId></artifactId>
+                <version></version>
+            </dependency>
+        </dependecies>
+    </dependencyManagement>
+    ```
+
+  * 在子工程配置中配置继承的父工程
+
+    ```xml
+    <parent>
+    	<groupId>com.wyh</groupId>
+        <artifactId>SSM_Totalpom</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <relativePath>../SSM_Totalpom/pom.xml</relativePath>
+    </parent>
+    ```
+
+    `**<relativePath>**`标签指明配置的父工程的pom文件是哪个，可写可不写
+
+  * 子工程可配置父工程提供的可选依赖
+
+    ```xml
+    <dependecies>
+        	<dependency>
+            	<gruopId></gruopId>
+                <artifactId></artifactId>
+            </dependency>
+    </dependecies>
+    ```
+
+    只需要提供群组id和项目id，无需提供版本。版本由父工程统一提供，避免了版本冲突。子工程还可以自己配置自己单独需要的资源依赖。
+
+* 聚合与继承的作用：
+
+  * 聚合用于快速构建项目
+  * 继承用于快速配置
+
+* 聚合与继承的相同点：
+
+  * 都是写在一个空模块的pom文件中，打包方式都为pom，所以一般，这两玩意儿一起出现，在一个pom文件中
+
+* 聚合与继承的不同点：
+
+  * 聚合是在当前模块中配置关系，聚合可以感知有哪些模块参与了
+  * 继承是在子模块中配置关系，父模块不知道有哪些子模块
 
 ### 4. 属性管理
 
+* 属性配置与使用
 
+  * 定义属性：
+
+    ```xml
+    	<properties>
+            <maven.compiler.source>8</maven.compiler.source>
+            <maven.compiler.target>8</maven.compiler.target>
+            <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!--        自定义属性-->
+            <spring-version>5.2.10.RELEASE</spring-version>
+        </properties>
+    ```
+
+  * 引用属性：
+
+    ```xml
+    		<dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-webmvc</artifactId>
+                <version>${spring-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-jdbc</artifactId>
+                <version>${spring-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-test</artifactId>
+                <version>${spring-version}</version>
+            </dependency>
+    ```
+
+    ${自定义属性名}即可
+
+* 资源文件（xxx.properties）引用属性
+
+  * 首先在pom中定义属性，与上步骤一样
+
+    ```xml
+    	<properties>
+            <maven.compiler.source>8</maven.compiler.source>
+            <maven.compiler.target>8</maven.compiler.target>
+            <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!--        自定义属性-->
+            <spring-version>5.2.10.RELEASE</spring-version>
+            <jdbc.url>jdbc:mysql://localhost:3306/xxx</jdbc.url>
+        </properties>
+    ```
+
+  * 配置文件用${jdbc.url}占位引用属性
+
+  *  开启资源文件目录加载属性的过滤器
+
+    ```xml
+    <build>
+    	<resources>
+        	<directory>${project.basedir}/src/main/resources</directory>
+            <filtering>true</filtering>
+        </resources>
+    </build>
+    ```
+
+    `<directory>`指资源文件所处的目录是哪儿，且只可以写一个
+
+    `<filtering>`指开启允许资源文件解析Maven的pom文件中的属性
+
+    ${project.basedir}是指当前这个pom文件所处的目录，子模块继承之后也可以让他们自己的resources文件下的资源文件能读取Maven提供的属性
+
+* （了解）配置Maven打包时，忽略web.xml的检查
+
+  ```xml
+  <plugin>
+  	<groupId>org.apache.maven,plugins</groupId>
+      <artifactId>maven-war-plugin</artifactId>
+      <version>3.2.3</version>
+      <configuration>
+      	<fileOnMissingWebXml>false</fileOnMissingWebXml>
+      </configuration>
+  </plugin>
+  ```
+
+* maven的内置属性：${project.basedir}
+
+* 版本管理：
+  * 工程版本：
+    * SNAPSHOT（快照版本）
+      * 项目开发过程中临时输出的版本
+      * 会不断更新
+    * RELEASE（发布版本）
+      * 项目开发到阶段里程碑，向外部发布的较稳定的版本，后续开发不会影响这个版本
+      * alpha版
+      * beta版
+      * 纯数字版
 
 ### 5. 多环境配置与应用
 
+#### 5.1 多环境开发
 
+* maven提供配置多环境开发的设定，帮助开发者使用过程中快速切换环境
+
+* 定义多环境
+
+  ```xml
+  <!--    定义多环境-->
+      <profiles>
+  <!--        定义具体生产环境-->
+          <profile>
+  <!--            定义环境唯一id-->
+              <id>env_dev</id>
+  <!--            定义环境中专用自定义属性-->
+              <properties>
+                  <jdbc.url>jdbc:mysql:///db1?useServerPrepStmts=true</jdbc.url>
+              </properties>
+  <!--            设置默认启动-->
+              <activation>
+                  <activeByDefault>true</activeByDefault>
+              </activation>
+          </profile>
+          <!--        定义具体生产环境-->
+          <profile>
+              <!--            定义环境唯一id-->
+              <id>env_test</id>
+              <!--            定义环境中专用自定义属性-->
+              <properties>
+                  <jdbc.url>jdbc:mysql://127.1.1.1:3306/db1?useServerPrepStmts=true</jdbc.url>
+              </properties>
+          </profile>
+          <!--        定义具体生产环境-->
+          <profile>
+              <!--            定义环境唯一id-->
+              <id>env_pro</id>
+              <!--            定义环境中专用自定义属性-->
+              <properties>
+                  <jdbc.url>jdbc:mysql://127.2.2.2:3306/db1?useServerPrepStmts=true</jdbc.url>
+              </properties>
+          </profile>
+      </profiles>
+  ```
+  
+* 使用多环境（构建过程）：`mvn 指令 -p 环境定义的唯一id`（如：mvn install -p pro_env）
+
+#### 5.2 跳过测试
+
+* 应用场景：
+
+  * 更新功能中并没有开发完毕又想打包上线
+  * 快速打包
+  * ...
+
+* 指令版：mvn 指令 -D skipTests（全部跳过测试）
+
+* IDEA按钮版：Maven窗口上有
+
+* 配置文件版（细粒度控制）：
+
+  ```xml
+      <build>
+          .....
+          <plugins>
+              <plugin>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <version>2.22.2</version>
+                  <configuration>
+                      <skipTests>false</skipTests><!--true为跳过全部测试-->
+  <!--                    跳过某个文件，不测试-->
+                      <excludes>**/User*Test.java</excludes>
+  <!--                    指定测试某个文件-->
+                      <includes>**/User*TestCase.java</includes>
+                  </configuration>
+              </plugin>
+          </plugins>
+      </build>
+  ```
 
 ### 6. 私服
+
+#### 6.1 私服简介
+
+* 私服是一台独立的服务器。用于解决团队之间内部的资源共享与资源同步问题
+* Nexus：
+  * Sonatype公司的一款maven私服产品（基于GAV坐标的）
+  * 启动服务器（命令行启动）：`nexus.exe /run nexus`
+  * 访问服务器（默认端口8081）：localhost:8081
+  * 修改基础配置信息：安装路径下的etc目录中的nexus-default.properties文件，保存了nexus的基础配置信息，如默认端口
+  * 修改服务器运行配置信息：在安装路径下的bin目录中的nexus.vmoptions文件保存了nexus服务器启动时对应的配置信息，如默认占用内存
+
+#### 6.2 私服仓库分类
+
+* 宿主仓库：hosted
+  * 功能：保存自主研发的+第三方资源（带版权要钱的）
+  * 关联操作：上传
+* 代理仓库：proxy
+  * 功能：代理连接中央仓库。以后就不是直接连接中央仓库下载开源资源，所有的需求都找这个仓库要，没有的话，他找中央仓库要
+  * 关联操作：下载
+* 仓库组：group
+  * 功能：为各个仓库编组简化下载操作
+  * 关联操作：下载
+* 自己创建宿主仓库（maven2-hosted）
+
+#### 6.3 资源上传与下载
+
+* 配置私服位置（Maven-3.8.1的setting.xml）
+
+  ```xml
+      <server>
+        <id>wyh-snapshot</id>
+        <username>admin</username>
+        <password>020920</password>
+      </server>
+      <server>
+        <id>wyh-release</id>
+        <username>admin</username>
+        <password>020920</password>
+      </server>
+    </servers>
+  ```
+
+  ```xml
+           <mirror>
+              <id>maven-public</id>
+              <mirrorOf>*</mirrorOf>
+              <url>http://localhost:8081/repository/maven-public/</url>
+          </mirror>
+  ```
+
+* 配置上传的私服位置（在工程的pom文件中）
+
+  ```xml
+  <!--    配置当前工程保存在私服里的的位置-->
+      <distributionManagement>
+  <!--        release仓库-->
+          <repository>
+              <id>wyh-release</id>
+              <url>http://localhost:8081/repository/wyh-release/</url>
+          </repository>
+  <!--        snapshot仓库-->
+          <snapshotRepository>
+              <id>wyh-snapshot</id>
+              <url>http://localhost:8081/repository/wyh-snapshot/</url>
+          </snapshotRepository>
+      </distributionManagement>
+  ```
+
+* 发布上传的指令：mvn deploy（或者直接IDEA点deploy）
+
+* 配置私服访问的中央仓库位置（在Nexus服务器中）：齿轮 -> Repositories -> maven-central -> Remote storage的路径改为阿里云路径 -> save
 
 
 
 ## 四.SpringBoot
 
+### 1. SpringBoot简介
+
+#### 1.1 入门案例
+
+* SpringBoot由pivotal团队提供的全新框架，目的是为了简化Spring的开发（简化简化的简化😂）
+* 入门程序：
+  1. 创建新模块，在选择模块骨架时，选择**Spring Initializr**（Spring初始化），并配置模块的相关信息，SDK版本与Java版本一致
+  2. 选择当前模块需要使用的技术集（如：Spring Web）
+  3. 开发控制类（RESTful开发的）
+  4. 运行它给你自动生成的Application类
+     * 即直接完成了简单后台服务器开发，没有任何坐标导入，Tomcat服务器他都给你自己适配了，牛逼
+* SpringBoot两个核心基础文件：
+  * pom.xml（有继承）
+  * Application类
+* SpringBoot简化：
+  * 将**pom文件中的坐标**由手工添加变为**勾选添加**
+  * 将**web3.0配置类**由手工制作变为**无需制作**
+  * 将**Spring/SpringMVC配置类**由手工制作变为**无需制作**
+  * 控制器做法未变，那是必然的，这事交给你
+    * 注意：基于IDEA开发SpringBoot程序需要联网才能够加载到程序框架结构。不用IDEA则可以去Spring官网创建工程，然后导入
+
+* SpringBoot的快速启动：
+  * 对SpringBoot项目打包（执行Maven的构建指令 package）
+  * 在打好的jar包文件下，敲cmd调出命令行窗口，输入：`java -jar + TAB键自动补齐该jar包`
+    * jar包支持命令行启动的话，需要有对应的插件：org.springframework.boot:**spring-boot-maven-plugin**，要一并打包好
+
+#### 1.2 SpringBoot概述
+
+* SpringBoot用来简化Spring应用的初始搭建以及开发过程
+
+* Spring程序缺点：
+
+  * 配置繁琐
+  * 依赖设置复杂
+
+* SpringBoot优点：
+
+  * 自动配置
+  * 起步依赖（简化了依赖配置）
+  * 辅助功能（内置服务器等）
+
+* 起步依赖（核心功能）：
+
+  * **starter**：
+    * SpringBoot常见项目名称，定义了当前项目使用的所有项目坐标，以达到**减少依赖配置**的目的
+  * parent：
+    * 所有SpringBoot项目要继承的项目，定义了若干个坐标版本号（依赖管理，SpringBoot给你统一规定了版本），以达到**减少依赖冲突**的目的
+    * spring-boot-starter-parent（2.5.0）与（2.4.6）共计57处不同
+  * 实际开发：
+    * 使用任意坐标时，仅书写GAV的G和A，无需指定版本，版本由SpringBoot提供
+    * 如果发生坐标错误，再指定版本（要小心版本冲突）
+
+* 辅助功能：快速启动内自带了一些辅助插件，方便快速启动
+
+* 启动方式：
+
+  ```java
+  @SpringBootApplication
+  public class SpringBoot1Application {//引导类
+      public static void main(String[] args) {
+          SpringApplication.run(SpringBoot1Application.class, args);
+      }
+  }
+  ```
+
+* SpringBoot在创建项目时，采用的是jar的打包方式
+
+* SpringBoot的**引导类是项目的入口，运行main方法**就是启动项目
+
+* 引导类就是一个配置类，里面整合了所有的Spring配置类所需注解，它会**自动扫描并加载当前引导类所在包及其子包内的所有bean**
+
+* 使用Maven依赖管理变更起步依赖项
+
+  ```xml
+          <dependency>
+              <groupId>org.springframework.boot</groupId>
+              <artifactId>spring-boot-starter-web</artifactId>
+  <!--排除依赖     更换技术首先需要排除之前那项技术-->
+              <exclusions>
+                  <exclusion>
+                      <groupId>org.springframework.boot</groupId>
+                      <artifactId>spring-boot-starter-tomcat</artifactId>
+                  </exclusion>
+              </exclusions>
+          </dependency>
+  <!--然后自己再导入需要的技术的GA，无需版本-->
+          <dependency>
+              <groupId>org.springframework.boot</groupId>
+              <artifactId>spring-boot-starter-jetty</artifactId>
+          </dependency>
+  ```
+
+  Jetty比Tomcat更轻量级，可扩展性相较于Tomcat更强，谷歌应用引擎（GAE）已经全面切换为了Jetty。小型项目可用Jetty，大型还是Tomcat
+
+### 2. 基础配置
+
+#### 2.1 配置文件格式
+
+* SpringBoot提供了多种属性配置方式
+
+  * application.properties文件：`server.port=80`
+
+  * application.yml文件：
+
+    ```yml
+    server:
+    	port: 81
+    ```
+
+  * application.yaml文件：
+
+    ```yaml
+    server:
+    	port: 82
+    ```
+
+  * 以后开发SpringBoot主要写**yml格式文件**
+
+  * 三种文件的生效顺序：properties > yml > yaml
+
+* yml文件内部IDEA自动提示失效的话：项目结构 -> facet -> 哪个Spring项目模块 -> 单击Configuration filels -> 点击上方自定义SpringBoot -> 点击文件点击加号添加文件到工程中即可
+
+* 敲关键字有自动提示
+
+#### 2.2 yaml
+
+* YAML（YAML Ain't Markup Language），一种数据序列化格式
+
+* 优点：
+
+  * 容易阅读
+  * 容易与脚本语言交互
+  * 以数据为核心，重数据轻格式
+
+* YAML文件扩展名
+
+  * .yml（主流）
+  * .yaml
+  * 都是对的
+
+* 语法规则：
+
+  * 大小写敏感
+  * 属性层级关系使用多行描述，每行结尾用冒号结束
+  * 使用缩进表示层级关系，同层级左侧对齐，只允许使用空格，不允许Tab键
+  * 属性值前面添加空格（属性名: 属性值），数据前面要**加空格**与冒号隔开
+  * #代表注释
+
+* YAML数组格式：(用于一个属性配多个值)
+
+  ```yaml
+  likes:
+     - music
+     - Game
+     - programming
+  ```
+
+* yaml读取数据：
+
+  * 使用@Value读取单个数据，属性名引用方式：${一级属性名.二级属性名....}
+
+    ```yaml
+    #yaml中数据
+    lesson: SpringBoot
+    
+    server:
+      port: 80
+    
+    enterprise:
+      name: wyh
+      age: 20
+      tel: 187******
+      likes:
+       - Java 
+       - C/C++
+    ```
+
+    ```java
+    @RestController
+    @RequestMapping("/books")
+    public class BookController {
+        @Value("${lesson}")
+        private String lesson;
+        @Value("${server.port}")
+        private int port;
+        @Value("${enterprise.likes[1]}")
+        private String like;
+    }
+    ```
+
+  * 封装数据到Environment对象中（框架内部使用几率高）
+
+    ```java
+    @RestController
+    @RequestMapping("/books")
+    public class BookController {
+        @Autowired
+        private Environment environment;
+        .....
+        //调用
+        //environment.getProperty("lesson")
+        //environment.getProperty("enterprise.likes[0]")
+    }
+    ```
+
+  * 自定义对象封装指定数据（常用）
+
+    ```java
+    @Component
+    @ConfigurationProperties(prefix = "enterprise")//可以添加下一层数据 enterprise.likes
+    public class Enterprise {
+        private String name;
+        private int age;
+        private String[] likes;
+    }
+    ```
+
+    ```java
+    @RestController
+    @RequestMapping("/books")
+    public class BookController {
+    	@Autowired
+        private Enterprise enterprise
+    }
+    ```
+
+  * 自定义对象封装数据警告解决方案
+
+    ```xml
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-configuration-processor</artifactId>
+        <optional>true</optional>
+    </dependency>
+    ```
+
+#### 2.3 多环境启动
+
+* yml文件中：
+
+```yml
+#设置启动哪个环境
+spring:
+  profiles:
+    active: test
+---
+#开发
+spring:
+  profiles: dev
+server:
+  port: 81
+---
+#生产
+server:
+  port: 82
+#以下这个方式为最新的配置方式，但是感觉有点冗杂，还是老旧的好，少
+spring:
+  config:
+    activate:
+      on-profile: pro
+---
+#测试
+spring:
+  profiles: test
+server:
+  port: 83
+```
+
+* properties文件格式：（了解）
+
+  * 主启动配置文件：application.properties
+
+    ```properties
+    spring.profiles.active=pro
+    ```
+
+  * 环境分类配置文件：application-pro.properties
+
+    ```properties
+    server.port=80
+    ```
+
+  * 环境分类配置文件：application-dev.properties
+
+    ```properties
+    server.port=81
+    ```
+
+  * 环境分类配置文件：application-test.properties
+
+    ```properties
+    server.port=82
+    ```
+
+* 多环境启动命令格式
+
+  package前要先clean
+
+  文档编码格式为UTF-8
+
+  * 带参数启动SpringBoot（即可切换想要的环境）
+
+    ```
+    java -jar SpringBoot_1.jar --spring.profiles.active=test
+    ```
+
+  * 命令行临时修改端口（可配置文件中没有的端口号）（有加载优先顺序，命令行参数大于配置文件中的）
+
+    ```
+    java -jar SpringBoot_1.jar --spring.profiles.active=test --server.port=8080
+    或
+    java -jar SpringBoot_1.jar --server.port=8080
+    ```
+
+* 多环境开发控制
+
+  * 有Maven又有SpringBoot的多环境，**Maven为主**，SpringBoot为辅
+
+  * maven中
+
+    ```xml
+        <!--    定义多环境-->
+        <profiles>
+            <!--        定义具体生产环境-->
+            <profile>
+                <!--            定义环境唯一id-->
+                <id>pro</id>
+                <!--            定义环境中专用自定义属性-->
+                <properties>
+                    <profile.active>pro</profile.active>
+                </properties>
+                <!--            设置默认启动-->
+                <activation>
+                    <activeByDefault>true</activeByDefault>
+                </activation>
+            </profile>
+            <!--        定义具体生产环境-->
+            <profile>
+                <!--            定义环境唯一id-->
+                <id>test</id>
+                <!--            定义环境中专用自定义属性-->
+                <properties>
+                    <profile.active>test</profile.active>
+                </properties>
+            </profile>
+            <!--        定义具体生产环境-->
+            <profile>
+                <!--            定义环境唯一id-->
+                <id>dev</id>
+                <!--            定义环境中专用自定义属性-->
+                <properties>
+                    <profile.active>dev</profile.active>
+                </properties>
+            </profile>
+        </profiles>
+    ```
+
+  * SpringBoot的application.yml文件读取maven的属性
+
+    ```yml
+    #设置启动哪个环境
+    spring:
+      profiles:
+        active: ${profile.active}
+    ```
+
+  * 添加maven插件解析yml文件的占位符${profile.active}
+
+    ```xml
+    			<plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>3.3.0</version>
+                    <configuration>
+                        <encoding>UTF-8</encoding>
+                        <useDefaultDelimiters>true</useDefaultDelimiters>
+                    </configuration>
+                </plugin>
+    ```
+
+#### 2.4 配置文件分类
+
+* SpringBoot中的四级配置文件
+  * 一级（最高）：file : config/application.yml（这是在打包后的文件夹中创建一个config目录，里面放application.yml，内置属性）
+  * 二级：file ：application.yml（这是在打包后的文件夹中放application.yml，内置属性）
+  * 三级：classpath：config/application.yml（这是在IDEA项目的resource文件夹中创建一个config目录，里面放application.yml，内置属性）
+  * 四级（最低）：classpath：application.yml（这是在IDEA项目的resource文件夹里面放application.yml，内置属性）
+* 作用：
+  * 一级与二级留做系统打包后的设置通用属性
+  * 三级和四级用于系统开发阶段设置通用属性
+
+### 3. 整合第三方技术
+
+#### 3.1 整合Junit
+
+* SpringBoot自动给你配置整合好了Junit
+
+  ```java
+  @SpringBootTest//开启SpringBoot的测试
+  class SpringBoot2ApplicationTests {
+      @Autowired//注入要测试的功能对象
+      private BookService bookService;
+  
+      @Test//然后测试
+      void testSelectAll() {
+          bookService.selectAll();
+      }
+  }
+  ```
+
+* @SpringBootTest：设置Junit加载的SpringBoot启动类（也就是自动创建的那个引导类）
+
+  * 相关属性：classes （包名与层级一致则可以省略这个属性）
+
+  * 作用：设置指定的SpringBoot的启动类（当测试类所在的包层级与包名与main目录中的启动类包名和层级不同会报错，那么指定即可解决报错）
+
+    ```java
+    @SpringBootTest(classes = SpringBoot2Application.class)
+    ```
+
+    这个测试注解和相应的测试类SpringBoot会给你自动创建，不要可以自己创
+
+#### 3.2 整合MyBatis
+
+* Spring整合MyBatis时：
+
+  * 配置SpringConfig配置类，导入JdbcConfig和MyBatisConfig配置类
+  * 配置JdbcConfig配置类，定义数据源（加载jdbc.properties文件内的属性）
+  * 配置MyBatisConfig配置类，定义两个bean
+    * SqlSessionFactoryBean和MapperScannerConfigurer（映射配置类）
+
+* SpringBoot直接简化：
+
+  * 创建模块时，选择SQL栏中的：**MyBatis framework** 和 **MySQL Driver**
+
+  * 设置数据源参数：
+
+    ```yml
+    spring:
+      datasource:
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://localhost:3306/db1?useServerPrepStmts=true
+        username: root
+        password: 020920
+        type: com.alibaba.druid.pool.DruidDataSource
+    ```
+
+    SpringBoot整合时，**内置了默认的数据源**，但里面没有相应的参数设置，比如连接哪个库，所以这是我们唯一需要做的，替换了Jdbc.properties文件
+
+    我们可以更改替换掉SpringBoot的默认数据源为Druid，要导入坐标，并在yml文件中的type属性加上对应的DruidDataSource全路径名
+
+  * 定义数据层接口与映射的配置
+
+    ```java
+    @Mapper
+    public interface BookDao {
+        @Select("select * from tb_books")
+        List<Book> selectAll();
+    }
+    ```
+
+    由于没有了MyBatisConfig配置类，无法告知需要创建代理对象的mapper接口是哪个
+
+    所以加上**@Mapper**注解。SpringBoot扫描到这个注解，就会创建mapper的代理对象，由这个对象去执行对应的的SQL语句                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+
+#### 3.3 基于SpringBoot的SSM整合
+
+* 基于SpringBoot整合SSM
+  * 不需要整合Spring和SpringMVC，勾选Web即可
+  * 主要是整合MyBatis
+  * pom.xml：
+    * 配置起步依赖
+    * 必要的资源坐标（Druid）
+  * application.yml：
+    * 数据源
+    * 端口、多开发环境
+  * 无需再设置任何配置类
+  * dao层接口注解多加了一个**@Mapper**，告知要创建mapper代理对象的dao层接口
+  
+* 实现细节：
+
+  * 页面资源（html、css等）放在resources目录的**static目录**下
+
+  * 若想直接在浏览器地址栏输入localhost就访问到books.html页面，那么在static页面下创建页面index.html，跳转到页面即可
+
+    ```html
+    <script>
+      document.location.href = "pages/books.html"
+    </script>
+    ```
+
+
+
 ## 五.MybatisPlus
+
+### 1.MyBatisPlus简介
+
+#### 1.1 入门案例
+
+* MyBatisPlus（简称MP）是基于MyBatis框架基础上开发的增强型**工具**，旨在简化开发，提高开发效率
+
+* 开发方式：
+
+  * 基于MyBatis使用MP
+  * 基于Spring使用MP
+  * 基于SpringBoot使用MP（当前课程首推）
+
+* 使用步骤：
+
+  * 创建SpringBoot模块，选择MySQL Driver 和 MP（IDEA默认没有的话那就手动添加）
+
+  * 添加MP起步依赖
+
+    ```xml
+    		<dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+                <version>3.5.2</version>
+            </dependency>
+    ```
+
+  * 设置JDBC参数（application.yml）
+
+  * 数据库中的**表名（user）要与实体类名（User）相对应，属性名和字段名相对应，不同就会报错**
+
+  * 定义数据接口，继承**BaseMapper<User>**，是一个泛型，指定实体类数据类型，再加上**@Mapper**注解使SpringBoot创建mapper代理对象
+
+  * 测试是否能访问数据库操作
+
+#### 1.2 MyBatisPlus概述
+
+* 国内技术
+* 特性：
+  * 无侵入：只做增强不做改变
+  * 强更大的CRUD操作：内置通用mapper，少量配置即可完成单表CRUD操作
+  * 支持Lambda：编写查询条件无须担心字段写错
+  * 支持主键自动生成
+  * 内置分页插件
+
+
+
+### 2.标准数据层开发
+
+#### 2.1 标准数据层高CRUD功能
+
+* MP接口：
+
+  * int inert(T t)
+  * int deleteById(Serializable id)
+  * int updateById(T t)
+  * T selectById(Serializable id)
+  * List<T> selelctList()
+  * IPage<T> selectPage(IPage<t> page)
+  * IPage<T> selectPage(Wrapper<T> queryWrapper)
+
+* lombok：一个Java类库，提供了一组注解，简化了POJO的开发
+
+  * 导入坐标
+
+    ```xml
+    <dependency>
+    	<groupId>org.prorjectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <version>1.18.12</version>
+        <scope>provided</scope>
+    </dependency>
+    ```
+
+  * 常用注解：@Date
+
+    ```java
+    @Date
+    public class User{
+    	private Long id;
+    	....
+    }
+    ```
+
+    为当前实体类在编译期设置对应的get/set方法，无参/有参构造方法，toString方法，hashCode方法，equals方法等
+
+#### 2.2 分页功能
+
+*  IPage<T> selectPage(IPage<t> page)
+
+* IPage<T> selectPage(Wrapper<T> queryWrapper)
+
+* 设置分页拦截器作为Spring管理的bean
+
+  ```java
+  public class MpConfig {
+      @Bean
+      public MybatisPlusInterceptor pageInterceptor() {
+          MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
+          interceptor.addInnerInterceptor(new PaginationInnerInterceptor());
+          return interceptor;
+      }
+  }
+  ```
+
+* 执行分页查询
+
+  * ```java
+    当前页码：page.getCurrent()
+    当前显示数：page.getSize()
+    当前一共多少页：page.getPages()
+    当前一共多少条数据：page.getTotal()
+    当前数据：page.getRecords()
+    ```
+
+* 可以开启日志功能
+
+  ```yml
+  mybatis-plus:
+    configuration:
+      log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  ```
+
+
+
+### 3.DQL控制
+
+#### 3.1 条件查询方式
+
+* MP将书写复杂的SQL查询条件进行封装，使用编程的形式完成查询条件的组合
+
+* Wrapper用来封装条件查询的条件
+
+* 设置条件查询条件
+
+  * 方式一：QueryWrapper
+
+    ```java
+    QueryWrapper<User> wrapper = new QueryWrapper<>();
+    wrapper.lt("id",4);//常规格式
+    wrapper.lambda().lt(User::getId,4);//Lambda格式
+    wrapper.lt("id",4).gt("id",2);//链式格式
+    System.out.println(userDao.selectList(wrapper));
+    ```
+
+  * 方式二：LambdaQueryWrapper
+
+    ```java
+    LambdaQueryWrapper<User> lqw = new LambdaQueryWrapper<>();
+    lqw.lt(User::getId,4);
+    lqw.gt(User::getId,2);
+    lqw.gt(User::getId,2).lt(User::getId,4);
+    lqw.lt(User::getId,2).or().gt(User::getId,3);
+    System.out.println(userDao.selectList(lqw));
+    ```
+
+  * 组合关系：
+
+    * 直接链式为AND
+
+      ```java
+      wrapper.lt("id",4).gt("id",2);
+      ```
+
+    * 加or()为OR
+
+      ```java
+      lqw.lt(User::getId,2).or().gt(User::getId,3);
+      ```
+
+* null值处理
+
+  一般情况下，用户不会在条件查询时将条件区间写完，会有一个null值，SQL在拼接时，拼接上null会报错，处理方式就是，如果为null，那么不拼接在SQL中
+
+  * if语句控制条件追加
+
+    ```java
+    LambdaQueryWrapper<User> lqw = new LambdaQueryWrapper<>();
+    if(null != userQuery.getAge()) {
+        lqw.gt(User::getAge,userQuery.getAge());
+    }
+    if(null != userQuery.getAge2()) {
+        lqw.lt(User::getAge,userQuery.getAge2());
+    }
+    System.out.println(userDao.selectList(lqw));
+    ```
+
+  * 条件参数控制
+
+    ```java
+    LambdaQueryWrapper<User> lqw = new LambdaQueryWrapper<>();
+    lqw.gt(null != userQuery.getAge(),User::getAge,userQuery.getAge());
+    lqw.lt(null != userQuery.getAge2(),User::getAge,userQuery.getAge2());//这两行可以链式变编程，太长了一般不推荐
+    System.out.println(userDao.selectList(lqw));
+    ```
+
+#### 3.2 查询投影
+
+* 也就是查询的字段控制，限制你能看到的字段数据内容，只能看到你设置的字段数据
+
+* 查询结果包含模型类中的部分属性
+
+  ```
+  LambdaQueryWrapper<User> lqw = new LambdaQueryWrapper<>();
+  lqw.select(User::getId,User::getName,User::getAge);//只有Lambda方式才可以使用，::为方法引用，指定能查询的属性
+  System.out.println(userDao.selectList(lqw));
+  ```
+
+* 查询结果包含模型类中未定义的属性（比如一共多少行：count（*））
+
+  ```
+  QueryWrapper<User> wrapper = new QueryWrapper<>();
+  wrapper.select("gender","count(*) as nums");//逗号后指的是要查询多少列，并将列数取个别名为nums，逗号前指要查询的列名为gender
+  wrapper.groupBy("gender");//以什么列（属性）来分组
+  System.out.println(userDao.selectList(wrapper));
+  ```
+
+#### 3.3 查询条件设定
+
+* 范围匹配（>, <, =, between）
+
+  * 等匹配（等于，eq）：登录时，或者查询一个时
+
+    ```java
+    lqw.eq(User::getName,"wyh").eq(User::getPassword,"jerry");
+    System.out.println(userDao.selectOne(lqw));
+    ```
+
+  * 范围匹配：lt（小于，没有等号），le（小于，有等号），gt（大于，无等号），ge（大于，有等号），between（大于等于~小于等于）
+
+    购物设定价格区间，户籍设定年龄区间
+
+    ```java
+    lqw.between(User::getAge,10,20);//前后顺序不可变，前为最小值，后为最大值
+    ```
+
+* 模糊匹配（like）：查信息，搜索新闻（非全文检索版）
+
+  ```java
+  lqw.like(User::getName,"J");
+  lqw.likeRight(User::getName,"J");//J%
+  lqw.likeLeft(User::getName,"J");%J
+  ```
+
+* 空判断（null）
+
+* 包含性匹配（in）
+
+* 分组（group）：统计报表（分组查询聚合函数）
+
+  ```java
+  QueryWrapper<User> wrapper = new QueryWrapper<>();
+  wrapper.select("count(*) as nums,gender");//逗号前指的是要查询多少列，并将列数取个别名为nums，逗号后指要查询的列名为gender
+  wrapper.groupBy("gender");//以什么列（属性）来分组
+  System.out.println(userDao.selectList(wrapper));
+  ```
+
+* 排序（order）
+
+* 更多条件查询在官网（https://mybatis.plus/guide/wrapper.html#abstractwrapper）
+
+#### 3.4 字段映射与表名映射
+
+* 实体类中属性名与表中字段名不一致，那肯定是后端开发人员解决这个问题，数据库的表早就做好了，没法改
+
+  ```mysql
+  create table user {
+  	id bigint(20) NOT NULL AUTO_INCREMENT,
+  	name varchar(32),
+  	pwd varchar(32),
+  	age int(3),
+  	tel varchar(32),
+  	PRIMARY KEY('id')
+  }
+  ```
+
+  ```java
+  //如表中为pwd，实体类中为password
+  public class User {
+  	private Long id;
+      private String name;
+      @TableField(value="pwd")//设置当前属性映射表中的pwd字段
+      private String password;
+      private Integer age;
+      private String tel;
+  }
+  ```
+
+* 实体类中存在数据库表中没有的字段属性
+
+  ```java
+  //如实体类中的online，表中没有这样的字段
+  public class User {
+  	private Long id;
+      private String name;
+      @TableField(value="pwd")//设置当前属性映射表中的pwd字段
+      private String password;
+      private Integer age;
+      private String tel;
+      @TableField(exist=false)//设置当前属性只有在这个实体类中使用，数据表中没有，不要去找了
+      private Integer online;
+  }
+  ```
+
+* 采用默认查询时，开放了许多私密字段的数据显示，比如查询时能看得见密码的值
+
+  ```java
+  public class User {
+  	private Long id;
+      private String name;
+      @TableField(value="pwd",select=false)//设置当前属性映射表中的pwd字段,并设置当前属性不参与查询，与select()配置不冲突
+      private String password;
+      private Integer age;
+      private String tel;
+      @TableField(exist=false)//设置当前属性只有在这个实体类中使用，数据表中没有，不要去找了
+      private Integer online;
+  }
+  ```
+
+* 表名与实体类名不一致，如表名为tb_user，实体类名为User
+
+  ```java
+  @TableName("tb_user")//设置当前实体类映射的表为tb_user
+  public class User {
+  	private Long id;
+      private String name;
+      @TableField(value="pwd",select=false)//设置当前属性映射表中的pwd字段,并设置当前属性不参与查询，与select()配置不冲突
+      private String password;
+      private Integer age;
+      private String tel;
+      @TableField(exist=false)//设置当前属性只有在这个实体类中使用，数据表中没有，不要去找了
+      private Integer online;
+  }
+  ```
+
+  
+
+### 4.DML控制
+
+* 添加，修改，删除
+
+* id生成策略控制
+
+  * 日志：自增
+
+  * 购物订单：特殊规则
+
+  * 外卖单：关联地区日期等信息
+
+  * 关系表：可以省略id
+
+    * 注解：@TableId
+
+      * 属性：IdType
+
+        * 取值（策略）：
+
+          * **AUTO**（0）：使用数据库id自增策略控制id生成
+
+          * NONE（1）：不设置id生成策略
+
+          * **INPUT**（2）：用户手工输入id
+
+          * **ASSIGN_ID**（3）（默认的）：雪花算法生成id，可兼容数值型与字符串型，如果自己手动输入了，那么用你输入的
+
+          * ASSIGN_UUID（4）：以UUID生成算法作为id生成策略
+
+            * 雪花算法：生成一个64位二进制数（long值）
+
+              ```asciiarmor
+              0|00100101001001010010010100100101001001010|10000|10001|000000000010
+              占位符（1）|时间戳（41）|机器码（5+5）|序列号（12）
+              ```
+
+  * @TableId(IdType = IdType.ASSIGN_ID)等同于在yml文件中配置MP全局属性
+
+    ```yml
+    	global-config:
+    		banner: false
+    		db-config:
+    		  id-type: assign_id
+    ```
+
+  * @TableName("tb_user")等同于在yml文件中配置MP全局属性
+
+    ```yml
+    	global-config:
+    		banner: false
+    		db-config:
+    		  id-type: assign_id
+    		   prefix: tb_      #为实体类名添加前缀，将实体类名User变为user加上这个前缀映射库中的表tb_user
+    ```
+
+* 多记录操作
+
+  * 按主键删除多条记录
+
+    ```java
+    List<Long> ids = Arrays.asList(new Long[]{2,3});
+    userDao.deleteBatchIds(ids);
+    ```
+
+  * 按主键查询多条记录
+
+    ```java
+    List<Long> ids = Arrays.asList(new Long[]{2,3});
+    List<User> userList = userDao.selectBatchIds(ids);
+    ```
+
+* 逻辑删除
+
+  * 删除操作业务问题：业务数据从数据库中丢弃了无法再找到
+
+  * 逻辑删除：为数据**设置是否可用状态字段**，**删除时设置状态字段为不可用状态**，数据仍保留在数据库中
+
+    * 表中添加逻辑字段（deleted）
+
+    * 实体类中添加对应的字段，并设定当前字段为逻辑删除标记字段
+
+      ```java
+      public class User {
+      	...
+      	@TableLogic(value="0",delval="1")
+          private Integer deleted;
+      }
+      ```
+
+      当字段过多嫌麻烦，可以在yml文件中设置成全局属性
+
+      ```yml
+      global-config:
+      		banner: false
+      		db-config:
+      		  id-type: assign_id
+      		   prefix: tb_
+      		   logic-delete--field: deleted #设置表中逻辑删除的字段
+      		   logic-not-delete-value: 0    #设置未删除时表中的默认值
+      		   logic-delete-value: 1        #设置删除时的值
+      ```
+
+    * 逻辑删除执行的SQL语句为update：update user set deleted=1 where id=？and deleted=0；
+
+    * 被逻辑删除后的数据需要自己写SQL来查询
+
+* 乐观锁
+
+  * 锁——用来解决并发问题
+
+  * 业务并发现象带来的问题：秒杀时，同时多人抢一个商品，可能会有人抢到虚空商品，所以乐观锁可以解决2000人左右的并发问题
+
+    * 数据库表中添加乐观锁对应的字段（version）
+
+    * 实体类中添加对应的字段，并设置当前属性字段为乐观锁字段
+
+      ```java
+      public class User {
+      	...
+      	@Version
+      	private Integer version;
+      }
+      ```
+
+    * 类似于开启分页功能，要在MpConfig配置类中开启乐观锁拦截器实现锁机制对应的动态SQL语句的拼装
+
+      ```java
+      public class MpConfig {
+          @Bean//分页功能拦截器
+          public MybatisPlusInterceptor pageInterceptor() {
+              MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();//开启MP的拦截器对象
+              interceptor.addInnerInterceptor(new PaginationInnerInterceptor());//添加分页功能拦截器
+              mpInterceptor.addInnerInterceptor(new OptimisticLockerInnerInterceptor());//添加乐观锁拦截器
+              return interceptor;
+          }
+      }
+      ```
+
+    * 使用了乐观锁机制在修改前必须要先获取到对应的数据的version字段的值才可以正常进行
+
+      ```java
+      	//先查询数据，获取到version数据
+      	User user = userDao.selectById(1L);
+      	//执行数据修改操作
+      	user.setName/setPassword/...
+      	userDao.updateById(user);
+      ```
+
+      修改时执行的SQL：update user set name=？，age=？，tel=？，version=？+1，where id=？and version=？
+
+      也就是第一个在操作这个数据时，修改了版本，下一个人用刚开始未修改的版本去访问并修改就无法进行了
+
+
+
+### 5.快速开发
+
+* 代码生成器
+  * 模板：由MP提供/自定义
+  * 数据库相关配置：读取数据库获取信息
+  * 开发者自定义配置：手工配置
+* 这是一个工具，其实自我认为那些业务自己多写写也好，老是用模板代码能力终究会下降，所以多写，这里不详细说明，需要时可以再深入了解
+
+
+
+
+
+​																																																			——**至此，SSM基础框架完结。©iWyh2**
+
