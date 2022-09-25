@@ -497,7 +497,7 @@ Java也有这样的写法，但不推荐。
 
 
 
-## 20. Java的常用API
+## 20. Java的各类常用API(更多请查询API文档)
 
 * Object类：
   * toString()：默认返回对象在堆内存里的地址信息
@@ -514,8 +514,93 @@ Java也有这样的写法，但不推荐。
   * reverse()：将对象的内容反转
   * length()：返回对象内容长度
   * toString()：把StringBuilder转换为String
-* String类：
-  * 
+* **String类**：
+  * **equals()：比较字符串内容是否一致**
+  * **equalsIgnoreCase()：忽略大小写比较字符串内容是否一致**
+  * **length()：返回字符串长度**
+  * **charAt(int index)：返回索引处的字符**
+  * **toCharArray()：转换为字符数组返回**
+  * **substring(int beginIndex，int endIndex)：根据起始与结束索引截取新字符串，包前不包后，不包括结束索引位置的字符**
+  * **substring(int beginIndex)：从开始索引到结束截取新字符串**
+  * **replace(CharSequence target，CharSequence replacement)：返回替换目标值后的新字符串（CharSequence就是一个字符串）**
+  * **split(String regex)：根据传入的规则切割字符串，返回字符串数组（regex就是源字符串内的需要分割的间隔符，比如逗号）**
+  * **contains(CharSequence s)：判读是否包含传入的字符串**
+  * **startWith(String prefix)：判断字符串是否以传入的字符串开始**
+* Scanner类：
+  * nextInt()：接收用户键盘输入的数字
+  * next()：接收用户键盘输入的字符串
+* Random类：
+  * nextInt(n)：生成0 ~ n-1之间的随机数
+* Math类（工具类）：
+  * abs(int a)：返回参数a的绝对值
+  * ceil(double a)：返回a向上取整的值
+  * floor(double a)：返回a向下取整的值
+  * round(float a)：返回a四舍五入后的值
+  * max(int a, int b)：返回两个参数中的最大值
+  * pow(dounle a, double b)：返回a的b次幂的值
+  * random()：返回0.0 ~ 1.0（不含1.0）的double随机值
+* System类（工具类）：
+  * exit(int status)：终止当前Java虚拟机，传入参数非零表示异常终止
+  * **currentTimeMillis()：返回当前系统时间的毫秒值形式**
+  * arraycopy(src数组，起始索引，dest数组，起始索引，拷贝个数)：拷贝数组
+* BigDecimal类：用于**解决浮点型运算精度失真问题**
+  * （static）valueOf(double val)：将传入的浮点数参数包装为BigDecimal对象（使用之后API的第一步，获取BigDecimal对象）（阿里巴巴开发建议使用）
+  * BigDecimal(String val)：阿里巴巴额外建议，若用构造方法创建BigDecimal对象，用String做参数的，直接传值会丢失精度
+  * add(BigDecimal b)：加法
+  * subtract(BigDecimal b)：减法
+  * multiply(BigDecimal b)：乘法
+  * divide(BigDecimal b)：除法
+  * divide(BigDecimal b，精确几位，舍入模式)：除法（结果为无限、循环小数时）（舍入模式：RoundingMode.HALF_UP 四舍五入）
+* **Date类**：当前系统此刻的日期时间（1s = 1000ms）
+  * Date()：创建当前的日期对象
+  * getTime()：获取当前日期对象的毫秒值
+  * Date(long time)：将传入的时间毫秒值参数转换为日期对象
+  * setTime(long time)：为日期对象将传入时间毫秒值，并设置为当前时间
+* SimpleDateFormat类：设置Date日期与时间毫秒值的格式/将字符串时间解析为日期对象
+  * SimpleDateFormat()：创建SimpleDateFormat对象，使用默认格式
+  * SimpleDateFormat(String pattern)：创建SimpleDateFormat对象，使用pattern指定格式
+    * pattern：
+      * `yyyy年MM月dd日 HH:mm:ss EEE a`: EEE-星期几/a-上下午
+  * **format(Date date)：将日期对象转为时间字符串返回**
+  * **format(Object time)：将时间毫秒值转为时间字符串返回**
+  * **parse(String source)：将时间字符串解析为日期对象返回，格式要一致才能解析**
+* Calender类（抽象类）：代表此刻系统日期对应的日历对象
+  * getInstance()：获取Calender对象
+  * get(int filed)：返回日历对象的某个字段信息（**不知道字段，可以先打印一下Calender对象，看有哪些字段**）
+  * set(int field，int value)：修改日历中的某个字段信息（一般不会修改日历时间，修改之后就不是此刻的日历对象）
+  * add(int field，int amount)：为某个字段增加或减少指定的值（单位为天、分等）
+  * getTime()：返回此刻的日期对象
+  * getTimeInMillis()：返回此刻的时间毫秒值
+* Java-8新增日期类API：严格区分时刻、本地日期、本地时间，方便运算，且都为不变类型，不必担心被修改
+  * LocalDate（日期）/LocalTime（时间）/LocalDateTime（日期时间）：API通用
+    * （static）now()：根据当前时间创建对象（LocalXxxx.now()）
+    * （static）of(...)：指定日期/时间创建对象（LocalDate.of(2002,9,20)/LocalTime(11,11,11)）
+    * getXxx()：获取时间对象的Xxx字段信息
+    * LocalDateTime可以转为另外两种对象：
+      * toLocalDate()：转为一个LocalDate返回
+      * toLocalTime()：转为一个LocalTime返回
+    * 运算方法，并返回一个新的日期时间对象：
+      * plusXxx/minusXxx/withXxx/isXxx
+  * Instant类（时间戳）：包含日期与时间，类似于Date，两者可以互相转换，功能更丰富
+    * （static）now()：获取当前时间戳（世界时间）
+    * atZone(ZonId.systemDefault())：使用系统默认时区
+    * Date.form(Instant time)：将时间戳转为Date返回
+    * date.toInstant()：将Date转为时间戳返回
+  * DateTimeFormatter类（线程安全相关的日期时间格式器）
+    * 正反都能调用format方法（不管是想格式化的时间对象还是DateTimeFormatter对象）
+    * （static）ofPattern(String pattern)：指定格式获取DateTimeFormatter对象
+    * 也可以解析字符串时间：parse
+  * Period类（日期间隔）：计算日期间隔，用于LocalDate
+    * （static）between(LocalDate d1，LocalDate d2)：获取时间间隔对象
+    * getYears()/getMonths()/getDays()：计算相隔多少年、月、日
+  * Duration类（时间间隔）：计算时间间隔，用于LocalDateTime或Instant
+    * （static）between(时间参数1，时间参数2)：获取时间间隔对象
+    * toDays/toHours/toMinutes/toMillis/toNanos：计算相隔多少时间
+  * ChronoUnit类（工具类）：可用于所有时间单位，测量一段时间
+
+
+
+## 21. Java的包装类
 
 
 
