@@ -105,8 +105,8 @@ Spring Framework是Spring生态圈中最基础、最顶级的项目，是其他�
   ```
 
   * `<bean>`是指配置Bean
-  * class属性是给Bean定义类型
-  * id属性是给这个bean起名字
+  * class属性是给Bean定义类型（类名）
+  * id属性是给这个bean起名字（对象名）
 
 * ```java
   //获取IoC容器
@@ -131,7 +131,7 @@ Spring Framework是Spring生态圈中最基础、最顶级的项目，是其他�
 
 ##### 4.2.2 案例实现
 
-1. 删去上个IoC案例中的service层的，以new形式创建的Dao对象，使有关系的对象成为对象属性
+1. 删去上个IoC案例中的service层的，以new形式创建的Dao对象，使有关系的对象成为对象属性（只需要一个引用）
 
    ```java
    private BookDao bookDao;
@@ -153,9 +153,9 @@ Spring Framework是Spring生态圈中最基础、最顶级的项目，是其他�
    </bean>
    ```
 
-* property表示给当前的Bean配置属性，也就是**给这个类的对象绑定关系**
-* name属性表示 选择具体的 要绑定的 是类中的哪个**成员变量对象** 的名称
-* ref属性表示name选择的这个对象要参照的具体类型是什么，具体是哪一个bean，也就是另一个Bean的id属性
+* property表示给当前的Bean**配置属性**，也就是**给这个类的对象绑定关系**
+* name属性表示 选择具体的 要绑定的 是类中的哪个**成员变量对象** 的名称（创建的对象名）
+* ref属性表示name选择的这个对象要参照的具体类型是什么，具体是哪一个bean，也就是另一个Bean的id属性（ref指向的bean需要容器里面有，然后根据bean的id查找）
 
 
 
@@ -277,12 +277,14 @@ Spring Framework是Spring生态圈中最基础、最顶级的项目，是其他�
    }
    ```
 
-   因为这个方法不是静态的，所以需要你实例化这个工厂才能调用这个获取对象方法去获取bean，那么配置也需要改变：
+   因为这个方法不是静态的，所以需要你实例化这个工厂才能调用这个获取对象方法去获取bean，也就是需要你先去将工厂配置为bean，同时配置也需要改变：
 
    ```xml
+   先配置工厂为bean
    <bean
          id="userDaoFactory"
          class="com.wyh.factory.UserDaoFactory"/>
+   再配置实例工厂方法
    <bean
          id="userDao"
          factory-bean="userDaoFactory"
@@ -295,7 +297,7 @@ Spring Framework是Spring生态圈中最基础、最顶级的项目，是其他�
 
 4. **实例工厂—改良升级版（实用）**
 
-   定义这个工厂类时，需要实现Spring提供的接口**FactoryBean**，且这是个泛型，要指定这个工厂获取的bean对象是哪一类，还要至少重写其里面的三个方法中的前两个，获取bean对象，获知bean对象类型，指定是否为单例创建（此方法可不重写，默认为true，也就是默认为单例创建，需要非单例时才重写并改为false）
+   定义这个工厂类时，需要实现Spring提供的接口**FactoryBean**，且这是个**泛型**，要指定这个工厂获取的bean对象是哪一类，还要至少重写其里面的三个方法中的前两个，获取bean对象，获知bean对象类型，指定是否为单例创建（此方法可不重写，默认为true，也就是默认为单例创建，需要非单例时才重写并改为false）
 
    ```java
    public class UserDaoFactoryBean implements FactoryBean<UserDao> {
@@ -312,7 +314,7 @@ Spring Framework是Spring生态圈中最基础、最顶级的项目，是其他�
    }
    ```
 
-   配置文件的改变：从配置所需bean，变为了直接配置这个创建的Factorybean
+   配置文件的改变：从配置所需bean，变为了**直接配置这个创建的Factorybean**
 
    ```xml
    <bean
@@ -320,7 +322,7 @@ Spring Framework是Spring生态圈中最基础、最顶级的项目，是其他�
          class="com.wyh.factory.UserDaoFactoryBean"/>
    ```
 
-   那么在IoC容器中获取bean对象时，getBean的值填这个FactoryBean的id值，Spring就会去调用里面的getObject方法，获取bean对象
+   那么在IoC容器中获取bean对象时，getBean的值填这个FactoryBean的id值，**Spring就会去调用里面的getObject方法**，获取bean对象
 
 #### 5.3 Bean的生命周期
 
@@ -356,17 +358,17 @@ bean的生命周期的控制：在bean创建后到销毁前做的一些事情
   }
   ```
 
-* bean生命周期：
+* **bean生命周期：**
 
-  * 初始化容器
-    1. 创建对象（分配内存）
-    2. 执行构造方法
-    3. 执行属性注入（set操作）
-    4. 执行bean初始化方法
-  * 使用bean
-    * 执行业务操作
-  * 关闭/销毁容器
-    * 执行bean的销毁方法
+  * **初始化容器**
+    1. **创建对象（分配内存）**
+    2. **执行构造方法**
+    3. **执行属性注入（set操作）**
+    4. **执行bean初始化方法**
+  * **使用bean**
+    * **执行业务操作**
+  * **关闭/销毁容器**
+    * **执行bean的销毁方法**
 
 * bean的销毁时机
 
@@ -392,7 +394,7 @@ bean的生命周期的控制：在bean创建后到销毁前做的一些事情
 
 依赖注入描述了容器建立bean与bean之间的依赖关系的过程
 
-原理也就是利用Java的反射机制，在加载时去调用set方法或构造方法为这个对象注入另一个所需对象。调用由Spring去调用。
+原理也就是利用Java的反射机制，在加载时去调用set方法或构造方法为这个对象注入另一个所需对象。**调用由Spring去调用**。
 
 但如果bean运行需要的是数字或者是字符串时，则原来的无参方法不行了
 
@@ -419,9 +421,9 @@ bean的生命周期的控制：在bean创建后到销毁前做的一些事情
 
   注：可配置多个property标签，内置多个引用类型
   
-  * property表示给当前的Bean配置属性，也就是**给这个类的对象绑定关系**
+  * property表示给当前的Bean**配置属性**，也就是**给这个类的对象绑定关系**
   * name属性表示 选择具体的 要绑定的 是类中的哪个**成员变量对象** 的名称
-  * ref属性表示name选择的这个对象要参照的具体类型是什么，具体是哪一个bean，也就是另一个Bean的id属性
+  * **ref属性表示name选择的这个对象要参照的具体类型是什么，具体是哪一个bean，也就是另一个Bean的id属性**
 
 #### 6.2 setter注入-简单类型
 
@@ -438,14 +440,15 @@ bean的生命周期的控制：在bean创建后到销毁前做的一些事情
 
   ```xml
   <bean class="com.wyh.service.impl.BookServiceImpl" id="bookService">
-          <property name="connectionNum" 
-                    value="10"/>
+          <property name="connectionNum" value="10"/>
   </bean>
   ```
-
+  
   Spring会自动给你转换数据类型
   
-  * value：就是想要注入的简单类型的值
+  * **value：就是想要注入的简单类型的值**
+
+【所以说，**引用类型用ref**，**简单类型用value**】
 
 #### 6.3 构造器注入-引用类型（了解）
 
@@ -458,7 +461,7 @@ bean的生命周期的控制：在bean创建后到销毁前做的一些事情
   }
   ```
 
-* 配置中在bean标签中使用**constructor-arg**标签中的ref属性注入引用类型的对象，name为构造器的形参名称
+* 配置中在bean标签中使用**constructor-arg**标签中的ref属性注入引用类型的对象（是一个bean的id），**name为构造器的形参名称**
 
   ```xml
   <bean class="com.wyh.service.impl.BookServiceImpl" id="bookService">
@@ -487,9 +490,11 @@ bean的生命周期的控制：在bean创建后到销毁前做的一些事情
   </bean>
   ```
 
+【依然的，**引用类型为ref，简单类型为value**】
+
 ##### 6.4.1 构造器注入的参数适配（了解）
 
-* 配置中使用constructor-arg标签的type属性设置按形参类型注入
+* 配置中使用constructor-arg标签的**type属性设置按形参类型注入**
 
   ```xml
   <bean class="com.wyh.service.impl.BookServiceImpl" id="bookService">
@@ -498,7 +503,7 @@ bean的生命周期的控制：在bean创建后到销毁前做的一些事情
   </bean>
   ```
 
-* 配置中使用constructor-arg标签的index属性设置按形参位置注入
+* 配置中使用constructor-arg标签的**index属性设置按形参位置注入**
 
   ```xml
   <bean class="com.wyh.service.impl.BookServiceImpl" id="bookService">
@@ -518,27 +523,26 @@ bean的生命周期的控制：在bean创建后到销毁前做的一些事情
 
 #### 6.6 依赖的自动装配
 
-* 配置中使用bean标签的**autowire**属性设置自动装配的类型，要提供set方法，替换掉之前的property标签
+* 配置中使用bean标签的**autowire**属性设置自动装配的类型，**要提供set方法，替换掉之前的property标签**，不用再配置property
 
   ```xml
   <bean id="bookDao" class="com.wyh.dao.impl.BookDaoImpl"/>
-  <bean id="bookService" class="com.wyh.service.impl.BookServiceImpl"
-        autowire="byType"/>
+  <bean id="bookService" class="com.wyh.service.impl.BookServiceImpl" autowire="byType"/>
   ```
-
+  
   * autowire取值：
-    * byType：按类型
-    * byName：按名称（setXxx方法中的Xxx）
+    * **byType：按类型**
+    * **byName：按名称（setXxx方法中的Xxx）**
     * default：默认
     * no：不自动装配
-  * 注：按类型时，如果这个类型是别的Bean，那么需要在容器中先配置这个bean，不然找不到
-
+  * 注：**按类型时，如果这个类型是别的Bean，那么需要在容器中先配置这个bean，不然找不到**
+  
 * 自动装配特征：
 
-  * 自动装配用于引用类型的注入，不能对简单类型进行操作
-  * 使用byType时，必须保证容器中bean类型要唯一，只有一个，且要有对应的set方法，一般推荐使用这个
-  * 使用byName时，要保证容器内要有指定名称的bean，由于变量名与配置耦合，所以不推荐
-  * 自动装配优先级低于setter注入与构造器注入
+  * **自动装配用于引用类型的注入，不能对简单类型进行操作**
+  * **使用byType时，必须保证容器中bean类型要唯一，只有一个，且要有对应的set方法，一般推荐使用这个**
+  * **使用byName时，要保证容器内要有指定名称的bean，由于变量名与配置耦合，所以不推荐**
+  * **自动装配优先级低于setter注入与构造器注入**
 
 #### 6.7 集合的注入
 
@@ -626,11 +630,11 @@ bean的生命周期的控制：在bean创建后到销毁前做的一些事情
 
 * 然后根据id来创建连接池对象即可
 
-这样的方式来管理不是自己写的第三方Bean，可能有些相关信息是需要在搜索引擎中自己查询的，比如c3p0（也是一个数据库连接池），但发现，这里面用setter注入的数据，大部分是不能直接写在程序中的。
+这样的方式来管理不是自己写的第三方Bean，可能有些相关信息是需要在搜索引擎中自己查询的，比如c3p0（也是一个数据库连接池，一代数据库连接池产品，早已被淘汰，不再更新了），但发现，这里面用setter注入的数据，比如密码，大部分是不能直接写在程序的xml文件中的。所以将配置信息写在properties文件中
 
 #### 7.1 加载properties配置文件信息
 
-* 开启context命名空间
+* **开启context命名空间**
 
   ```xml
   <beans xmlns="http://www.springframework.org/schema/beans"
@@ -748,7 +752,7 @@ bean的生命周期的控制：在bean创建后到销毁前做的一些事情
   bookDao.save();
   ```
 
-  BeanFactory创建完毕后，所有的bean都是**延迟加载**，不会执行它的构造方法，ApplicationContext是Spring的核心接口，最常用，且为**立即加载**。
+  BeanFactory创建完毕后，所有的bean都是**延迟加载**，不会执行它的构造方法，也就是需要的时候再去创建对象，ApplicationContext是Spring的核心接口，最常用，且为**立即加载**。
 
 
 
@@ -757,6 +761,8 @@ bean的生命周期的控制：在bean创建后到销毁前做的一些事情
 Spring2.0开始提供的方法，简化开发
 
 #### 9.1 注解开发定义Bean
+
+就不需要在xml文件中定义bean标签了
 
 * 使用@Component定义bean(component-组件)
 
@@ -767,27 +773,27 @@ Spring2.0开始提供的方法，简化开发
   public class BookServiceImpl implements BookService{}
   ```
 
-* 核心文件applicationContext.xml中通过组件扫描加载bean
+* 核心文件applicationContext.xml中**通过组件扫描加载bean**
 
   ```xml
-  <context:component-scan base-package="com.wyh">
+  <context:component-scan base-package="com.wyh">在新增的命名空间中 指定需要扫描的包
   ```
 
-* 注：未起id名，则在getBean时，用类型去获取，且这个组件扫描是在context命名空间里面的
+* 注：**未起id名，则在getBean时，用类型去获取**，且这个**组件扫描是在context命名空间里面的**
 
 * Spring提供@Component注解的三个衍生注解：
 
   * **@Controller**：用于表现层bean定义
   * **@Service**：用于业务层bean定义
   * **@Repository**：用于数据层bean定义
-  * 注1：功能与@Component一样，放便于我们理解
-  * 注2：**@Service** 是把 spring 容器中的 bean 进行实例化，也就是等同于 new 操作，只有 实现类 是可以进行 new 实例化的，而 接口 则不能，所以是**加在 实现类上**
+  * 注1：**功能与@Component一样**，放便于我们理解
+  * 注2：**@Service** 是把 spring 容器中的 bean 进行实例化，也就是**等同于 new 操作**，只有 实现类 是可以进行 new 实例化的，**而 接口 则不能**，所以是**加在 实现类上**
 
 #### 9.2 纯注解开发
 
-Spring3.0开始升级了纯注解开发模式，使用**java类替代配置文件**。
+Spring3.0开始升级了**纯注解开发模式**，使用**java类替代配置文件**。
 
-* java类代替Spring的核心配置文件applicationContext.xml，建议新创建一个包叫config专门放置配置类
+* **java类代替Spring的核心配置文件applicationContext.xml**，建议新创建一个包叫config专门放置配置类
 
   ```java
   @Configuration//这是替换的所有的基础配置
@@ -854,7 +860,7 @@ Spring3.0开始升级了纯注解开发模式，使用**java类替代配置文�
   }
   ```
 
-  * 自动装配基于反射原理。创建对象时暴力反射对应的私有属性并初始化数据，因此无需提供setter方法
+  * **自动装配基于反射原理**。创建对象时暴力反射对应的私有属性并初始化数据，因此无需提供setter方法
   * 自动装配建议使用无参的构造方法，这是默认的，且无参构造要唯一
 
 * 使用@Qualifier注解开启按指定名称装配bean
@@ -1014,7 +1020,7 @@ Spring3.0开始升级了纯注解开发模式，使用**java类替代配置文�
 
 
 
-### 10. Spring整合MyBatis(重点)
+### 10. Spring整合MyBatis(注解版)
 
 曾经使用Mybatis时，是需要加载MyBatis的核心配置文件（mybatis-config.xml）的。
 
@@ -1147,6 +1153,8 @@ Spring3.0开始升级了纯注解开发模式，使用**java类替代配置文�
 
 * 这样也就整合完了Mybatis。然后我们就能和之前一样创建dao层，service层。dao层访问数据库，mapper接口里面写对应的注解类型的SQL，service层写业务逻辑。在此不再阐述。
 
+* **Spring整合MyBatisXML配置版**请移步[MyBatisPlus.md]中查询
+
 
 
 ### 11.Spring整合JUnit
@@ -1188,8 +1196,8 @@ Spring3.0开始升级了纯注解开发模式，使用**java类替代配置文�
 * AOP是一个大的概念，很多地方都有
 * 核心概念：
   * **连接点**（JoinPoint）：程序执行过程中的任意位置，可以是执行的方法，抛出异常，设置变量等
-    * 而在Spring中，AOP的连接点是：**方法的执行**，**也就是所有的方法**
-  * **切入点**（PointCut）：<u>匹配连接点</u>的式子
+    * 而在Spring中，AOP的连接点是：**方法的执行**，**也就是所有的方法**（方法就是连接点）
+  * **切入点**（PointCut）：<u>匹配连接点</u>的式子（描述方法的式子就是切入点）
     * 在Spring中，AOP的切入点是：**一个切入点可以描述一个具体方法，也可以匹配多个方法**，就是**具体匹配的一个或多个连接点**，也就是**需要增强功能的方法**，是一个注解，注解内描述需要增强的连接点
       * 一个具体方法：com.wyh.dao包下的BookDao接口中的无形参无返回值的save方法
       * 多个方法：所有的save方法，所有get开头的方法，所有以Dao结尾的接口中的任意方法，所有带有一个参数的方法
@@ -1570,7 +1578,7 @@ AOP通知分为五类：
 由Spring开启一个事务，其他的操作事务加入到这个事务中，Spring开启的这个事务叫事务管理员，而加入到这个Spring大事务的这些操作事务叫事务协调员。
 
 * **事务管理员**：发起事务的一方。在Spring中通常指代业务层开启事务的方法。也就是**有着@Transactional注解的方法**。
-* **事务协调员**：加入事务的一方。在Spring中通常指代数据层方法。也可以是业务层方法。**也就是可以是另一个事务管理员**。
+* **事务协调员**：加入事务的一方。在Spring中通常指代数据层方法。也可以是业务层方法。**也可以是另一个事务管理员**。
 
 注：DataSourceTransactionManager注入的dataSource与我们MyBatis使用的dataSource是一致的，都是JDBC事务的。
 
