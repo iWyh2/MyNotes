@@ -483,12 +483,12 @@ Java的**数组工具类：Arrays**
       goSwim(new Swimming(){
           @Override
           void swim() {
-              System.out,print("swim so fast");
+              System.out.print("swim so fast");
           }
       });
       //-------下面为相同效果的Lambda简化--------
       goSwim(() -> {
-              System.out,print("swim so fast");
+              System.out.print("swim so fast");
           });
   }
   ```
@@ -552,7 +552,7 @@ Java的**数组工具类：Arrays**
 * 当用于遍历集合时，forEach方法用Lambda格式简化，如果遍历集合的目的是为了打印内容，最终Lambda会简化为
 
   ```java
-  list.forEach(s->System.out.println(s))
+  list.forEach(s->System.out.println(s));
   ```
 
   这里有一个Lambda的新格式：**方法引用**，满足以上条件，只有一个参数，一行代码，且为引用别人的方法
@@ -886,7 +886,7 @@ Java的**数组工具类：Arrays**
       
         **HashSet去重复**：如果**希望Set集合认为两个内容一样的对象是重复的**需要去掉重复，那么**必须重写对象的hashCode()和equals()方法**
       
-        > 详情请见：[为什么重写equals还要重写hashCode？.md]
+        > 详情请见：[**为什么重写equals还要重写hashCode？.md**]
       
         
       
@@ -896,7 +896,7 @@ Java的**数组工具类：Arrays**
       
           
       
-      * TreeSet（基于TreeMap）：添加的元素**按照大小默认升序排序**、不重复、无索引
+      * **TreeSet**（基于TreeMap）：添加的元素**按照大小默认升序排序**、不重复、无索引
       
         底层基于**红黑树**
       
@@ -913,9 +913,138 @@ Java的**数组工具类：Arrays**
       
         
   
-  * **Map**（双例集合祖宗接口）：体系接口，每个元素包含两个值（键值对）
+  * **Map**（双例集合**祖宗接口**）：体系接口，每个元素包含两个值（键值对 key=value）  
+  
+    格式：{key1=value1，key2=value2，...}
+  
+    **Map的键：无序，不重复，无索引**，后面重复的键会覆盖前面已经存在的键
+  
+    Map的值：不做要求
+  
+    键值对都可以是null
+  
+    常用API：（体系祖宗API）
+  
+    ```java
+    V put(K key, V value);//添加元素
+    V get(Object key);//根据建 获取元素
+    V remove(Object key);//根据键 删除键值对
+    void clear();//移除所有的键值对元素
+    boolean containsKey(Object key);//判断集合是否包含指定的键
+    boolean containsValue(Object value);//判断集合是否包含指定的值
+    boolean isEmpty();//判断集合是否为空
+    int size();//返回集合的长度，也就是键值对的个数
+    Set<K> keySet();//获取全部键的Set集合（Set不能直接new对象，底层是用HashSet之类的实现类返回的）
+    Collection<V> values();//获取全部值的Collection集合（Collection可以保留重复的值）
+    void putAll(Map<? extends K,? extends V> m);//将参数的map集合拷贝一份加到调用者集合里面去（用于合并其他Map）
+    Set<Map.Entry<K,V>>entrySet();//获取所有 键值对对象 的集合
+    K getKey();//获得键
+    V getValue();//获得值
+    void forEach(BiConsumer<? super K, ? super V> action);//结合Lambda遍历Map集合
+    ```
+  
+    **遍历Map集合方式**：
+  
+    1. **键找值（一般用这个）**
+  
+       先获取Map的全部键的Set集合
+  
+       然后遍历键的Set集合，通过获取的键提取对应的值
+  
+       所需API（**keySet**/**get**）
+  
+    2. 键值对
+  
+       先把Map集合转为Set集合，Set集合中的每个元素就是**键值对的实体类型**
+  
+       然后增强for遍历Set集合，然后提取 键 和 值
+  
+       所需API（entrySet/getKey/getValue）
+  
+    3. 结合Lambda
+  
+       内部原理是进行了键值对的遍历方式
+  
+       结合Lambda省略写法
+  
+       ```java
+       maps.forEach(new BiConsumer<String, Integer>() {
+       	@Override
+       	public void accept(String key, Integer value) {
+       		System.out.println(key+"---->"+value);
+       	}
+       });
+       //Lambda省略
+       maps.forEach((k,v)—>System.out.println(k+"---->"+v));
+       ```
+  
+       
+  
+    * **HashMap**（键是无序，不重复，无索引，与Map一致）(用的最多)
+  
+      常用API与Map接口一致
+  
+      **底层原理和HashSet底层原理一模一样，都是哈希表结构**，只是HashMap的每个元素包含两个值而已（Set系列集合底层就是Map实现的，new的Map实现类，只不过Set只要值，不要键而已）
+  
+      **依赖hashCode和equals方法保证键的唯一**，如果键要存储自定义对象，那么需要重写hashCode和equals方法（内容重复的对象看做是同一个键）
+  
+      基于哈希表，那么增删改查性能都好
+  
+      
+  
+      * **LinkedHashMap**（**键是有序，不重复，无索引**）
+  
+        有序指存储和取出的元素顺序是一致的
+  
+        **底层原理依然是哈希表**，只是基于HashMap**多了个双链表记录存储的顺序**
+  
+        常用API与Map接口一致
+  
+      
+  
+    * **HashTable**
+  
+      **键和值都不能为null**
+  
+      使用方法和HashMap一致，也就是常用API基本一致
+  
+      特点：**HashTable是线程安全的**，HashMap线程不安全
+  
+      底层原理：内部有一个数组 (HashTable$**Entry**) 初始大小为11，临界值为8（11*0.75）超过8就会扩容
+  
+      
+  
+      * **Properties**
+  
+        **继承自HashTable**并实现了Map，**线程是安全的**
+        
+        用键值对来保存数据，键值对不能为null
+        
+        常用API与Map一致
+        
+        Properties用于从xxx.properties文件加载数据到Properties类对象中，进行读取和修改
+        
+        也就是说，Properties是**从properties配置文件中读取数据的中间桥梁**
+        
+        
+    
+    * **TreeMap**（**键是可排序，不重复(键内容要不一致)，无索引**）
+    
+      可排序指**按照键的数据大小，默认升序排序（只能对键排序）**
+    
+      底层原理与TreeSet一致（因为TreeSet底层就是TreeMap）
+    
+      想排序，基本类型自动帮你排，对于自定义类型，要么类实现Comparable接口，重写比较规则，要么**集合传入Comparator对象，重写比较规则**
+    
+      **根据大小规则，相等就认为是重复的**
+    
+      
+  
+  
   
 * **集合都是支持泛型的**，在**编译阶段约束**集合只能操作某种数据类型
+
+* 集合（不管是Collection还是Map）**都可以嵌套使用**
 
 * 从集合中找出某个元素并删除时可能会出现一种**并发修改异常问题**
 
@@ -939,6 +1068,31 @@ Java的**数组工具类：Arrays**
     * shuffle(List<?> list)：打乱list的元素排序
     * sort(List\<?> list)：将list元素按照默认规则排序，不能直接对自定义类型排序，除非实现了Comparable接口
     * sort(List<?> list，Comparator<? super T> c)：将list按照传入的规则排序
+
+
+
+* **不可变集合**：不可以被修改的集合（类似于静态数组）
+
+  * 集合的数据项在创建的时候提供，并且**在整个生命周期中都不可以被改变**（添加或更换都不可以）
+
+  * 使用场景：
+
+    * 某个数据不能被修改，把它防御性地拷贝到不可变集合中（也就是只想给你看，但你别动老子的）
+    * 集合对象被不可信的库调用时，不可变集合是安全的
+
+  * 创建方式：
+
+    * 首先，对于集合，不管是Collection还是Map，（List Set Map）都可以创建，它们类里面都有一个静态的 of方法
+
+    * ```java
+      static <E> List<E> of(E...elements);//创建一个具有指定元素的List对象，也就是不可变集合对象
+      static <E> Set<E> of(E...elements);//创建一个具有指定元素的Set对象，也就是不可变集合对象
+      static <E> Map<K,V> of(E...elements);//创建一个具有指定元素的Map对象，也就是不可变集合对象
+      ```
+
+    * 你可以把数据取出来自己处理，但是不可以在集合里面处理，改变不了集合
+
+    * 不能添加，不能修改，不能删除
 
 
 
@@ -984,3 +1138,14 @@ Java的**数组工具类：Arrays**
 * 注意：
   * 一个形参列表**只能有一个可变参数**
   * **可变参数必须放在形参列表的最后面**
+
+
+
+## 26. Java的Stream流
+
+
+
+
+
+
+

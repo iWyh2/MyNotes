@@ -2236,7 +2236,7 @@ public List<User> toJsonList() {
   * http://localhost/users/1 -查询指定用户信息-GET请求（查询）
   * http://localhost/users -添加用户信息-POST请求 （新增/保存）
   * http://localhost/users -修改用户信息-PUT请求（修改/更新）
-  * http://localhost/users/1 -删除用户信息-DELETE（删除）
+  * http://localhost/users/1 -删除用户信息-DELETE请求（删除）
     * 常用的请求方式：**GET**/**POST**/**PUT**/**DELETE**
 * 根据REST风格对资源进行访问成为**RESTful**（也就是拿REST风格进行开发）
   * 上述行为为风格，不是规范，但现在都在使用，也和规范差不多了。
