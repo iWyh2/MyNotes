@@ -555,17 +555,22 @@ Java的**数组工具类：Arrays**
   list.forEach(s->System.out.println(s));
   ```
 
-  这里有一个Lambda的新格式：**方法引用**，满足以上条件，只有一个参数，一行代码，且为引用别人的方法
+  这里有一个Lambda的新格式：**方法引用**，满足以上条件，只有一个参数，一行代码，且为引用别人的方法，引用别人的方法也是传入刚刚那个参数时
 
   ```java
+  list.forEach(s -> System.out.println(s));
+  //方法的使用参数和引用方法传入的参数一致时  方法引用简化
   list.forEach(System.out::println);
+  //或者引用的是构造器方法
+  list.stream().map(s -> new Student(s)).forEach(s -> System.out.println(s));
+  list.stream().map(Student::new).forEach(System.out::println);
   ```
 
 
 
 
 
-## 20. Java的各类常用API(更多请查询API文档)
+## 20. Java的各类常用API
 
 * Object类：
   * toString()：默认返回对象在堆内存里的地址信息
@@ -573,15 +578,24 @@ Java的**数组工具类：Arrays**
   * equals()：默认比较当前对象与另一个对象的地址是否相同
     * 完全可以直接用“==”比较两个引用地址是否相同（也就是比较对象地址是否相同）
     * 子类重写Object的equals，自定义equals的比较规则（如比较两个对象内容是否相同）
+
+
+
 * Objects类：
   * （static）equals(o1,o2)：**进行了非null检验**，更安全（阿里巴巴开发手册曾有，若用Object的equals，调用者必须为非null），会调用对象重写的equals方法
   * （static）isNull(o)：判断变量是否为空（就是return o==null）
+
+
+
 * StringBuilder类（可变字符串类，是一种手段工具，最终还是要变回String类型）：
   * 构造器方法：StringBuilder() 创建空白可变的字符串对象/StringBuilder(String str) 创建指定内容的可变字符串对象
   * **append(任意类型)**：添加数据并返回StringBuilder对象本身 -> 可以链式编程
   * reverse()：将对象的内容反转
   * length()：返回对象内容长度
   * toString()：把StringBuilder转换为String
+
+
+
 * **String类**：
   * **equals()：比较字符串内容是否一致**
   * **equalsIgnoreCase()：忽略大小写比较字符串内容是否一致**
@@ -594,11 +608,20 @@ Java的**数组工具类：Arrays**
   * **split(String regex)：根据传入的规则切割字符串，返回字符串数组（regex就是源字符串内的需要分割的间隔符，比如逗号）**
   * **contains(CharSequence s)：判读是否包含传入的字符串**
   * **startWith(String prefix)：判断字符串是否以传入的字符串开始**
+
+
+
 * Scanner类：
   * nextInt()：接收用户键盘输入的数字
   * next()：接收用户键盘输入的字符串
+
+
+
 * Random类：
   * nextInt(n)：生成0 ~ n-1之间的随机数
+
+
+
 * Math类（工具类）：
   * abs(int a)：返回参数a的绝对值
   * ceil(double a)：返回a向上取整的值
@@ -607,10 +630,16 @@ Java的**数组工具类：Arrays**
   * max(int a, int b)：返回两个参数中的最大值
   * pow(dounle a, double b)：返回a的b次幂的值
   * random()：返回0.0 ~ 1.0（不含1.0）的double随机值
+
+
+
 * System类（工具类）：
   * exit(int status)：终止当前Java虚拟机，传入参数非零表示异常终止
   * **currentTimeMillis()：返回当前系统时间的毫秒值形式**
   * arraycopy(src数组，起始索引，dest数组，起始索引，拷贝个数)：拷贝数组
+
+
+
 * BigDecimal类：用于**解决浮点型运算精度失真问题**
   * （static）valueOf(double val)：将传入的浮点数参数包装为BigDecimal对象（使用之后API的第一步，获取BigDecimal对象）（阿里巴巴开发建议使用）
   * BigDecimal(String val)：阿里巴巴额外建议，若用构造方法创建BigDecimal对象，用String做参数的，直接传值会丢失精度
@@ -619,19 +648,28 @@ Java的**数组工具类：Arrays**
   * multiply(BigDecimal b)：乘法
   * divide(BigDecimal b)：除法
   * divide(BigDecimal b，精确几位，舍入模式)：除法（结果为无限、循环小数时）（舍入模式：RoundingMode.HALF_UP 四舍五入）
+
+
+
 * **Date类**：当前系统此刻的日期时间（1s = 1000ms）
   * Date()：创建当前的日期对象
   * getTime()：获取当前日期对象的毫秒值
   * Date(long time)：将传入的时间毫秒值参数转换为日期对象
   * setTime(long time)：为日期对象将传入时间毫秒值，并设置为当前时间
-* SimpleDateFormat类：设置Date日期与时间毫秒值的格式/将字符串时间解析为日期对象
+
+
+
+* SimpleDateFormat类：**设置Date日期与时间毫秒值的格式**/**将字符串时间解析为日期对象**
   * SimpleDateFormat()：创建SimpleDateFormat对象，使用默认格式
   * SimpleDateFormat(String pattern)：创建SimpleDateFormat对象，使用pattern指定格式
     * pattern：
-      * `yyyy年MM月dd日 HH:mm:ss EEE a`: EEE-星期几/a-上下午
+      * `yyyy年MM月dd日 HH:mm:ss EEE a`:  EEE-星期几/a-上下午
   * **format(Date date)：将日期对象转为时间字符串返回**
   * **format(Object time)：将时间毫秒值转为时间字符串返回**
   * **parse(String source)：将时间字符串解析为日期对象返回，格式要一致才能解析**
+
+
+
 * Calender类（抽象类）：代表此刻系统日期对应的日历对象
   * getInstance()：获取Calender对象
   * get(int filed)：返回日历对象的某个字段信息（**不知道字段，可以先打印一下Calender对象，看有哪些字段**）
@@ -639,7 +677,10 @@ Java的**数组工具类：Arrays**
   * add(int field，int amount)：为某个字段增加或减少指定的值（单位为天、分等）
   * getTime()：返回此刻的日期对象
   * getTimeInMillis()：返回此刻的时间毫秒值
-* Java-8新增日期类API：严格区分时刻、本地日期、本地时间，方便运算，且都为不变类型，不必担心被修改
+
+
+
+* Java-8新增日期类API：严格区分 时刻、本地日期、本地时间，方便运算，且都为不变类型，不必担心被修改
   * LocalDate（日期）/LocalTime（时间）/LocalDateTime（日期时间）：API通用
     * （static）now()：根据当前时间创建对象（LocalXxxx.now()）
     * （static）of(...)：指定日期/时间创建对象（LocalDate.of(2002,9,20)/LocalTime(11,11,11)）
@@ -649,23 +690,40 @@ Java的**数组工具类：Arrays**
       * toLocalTime()：转为一个LocalTime返回
     * 运算方法，并返回一个新的日期时间对象：
       * plusXxx/minusXxx/withXxx/isXxx
+
+  
+
   * Instant类（时间戳）：包含日期与时间，类似于Date，两者可以互相转换，功能更丰富
     * （static）now()：获取当前时间戳（世界时间）
     * atZone(ZonId.systemDefault())：使用系统默认时区
     * Date.form(Instant time)：将时间戳转为Date返回
     * date.toInstant()：将Date转为时间戳返回
+
+  
+
   * DateTimeFormatter类（线程安全相关的日期时间格式器）
     * 正反都能调用format方法（不管是想格式化的时间对象还是DateTimeFormatter对象）
     * （static）ofPattern(String pattern)：指定格式获取DateTimeFormatter对象
     * 也可以解析字符串时间：parse
+
+  
+
   * Period类（日期间隔）：计算日期间隔，用于LocalDate
     * （static）between(LocalDate d1，LocalDate d2)：获取时间间隔对象
     * getYears()/getMonths()/getDays()：计算相隔多少年、月、日
+
+  
+
   * Duration类（时间间隔）：计算时间间隔，用于LocalDateTime或Instant
     * （static）between(时间参数1，时间参数2)：获取时间间隔对象
     * toDays/toHours/toMinutes/toMillis/toNanos：计算相隔多少时间
+
+  
+
   * ChronoUnit类（工具类）：可用于所有时间单位，测量一段时间
     * 如：ChronoUnit.YEARS.between(LocalDateTime1，LocalDateTime2)
+
+(更多请查询API文档)
 
 
 
@@ -1103,7 +1161,7 @@ Java的**数组工具类：Arrays**
 * 作用：**在编译阶段约束操作的数据类型，并进行检查**
 * 格式：<数据类型 E >，泛型只支持引用数据类型，基本数据类型请用**包装类**
 * 把出现泛型变量的地方转换成真实数据类型
-* 集合体系的所有接口和实现类都是支持泛型的
+* **集合体系**的所有接口和实现类都是支持泛型的
 * 好处：统一数据类型。把运行时的问题提前到了编译期间，**避免了强制类型转换可能出现的异常，因为编译阶段就已经确定了类型**
 * 可以在很多地方定义：
   * 类后面：**泛型类**
@@ -1122,8 +1180,8 @@ Java的**数组工具类：Arrays**
 * 泛型的通配符：**？**，在**使用泛型时**，**代表一切类型**，也就是**在使用泛型时，用通配符，表示一切类型都可以传过来**
   * 泛型变量是在**定义泛型**时使用，**比如定义方法、接口或者类时，泛型变量约束了它们只能操作定义时的类型**
 * 泛型的上下限：
-  * **泛型上限**：? extends 类名（只能是这个类或者它的**子类**）
-  * **泛型下限**：? extends 类名（只能是这个类或者它的**父类**）
+  * **泛型上限**：? extends 子类类名（只能是这个类或者它的**子类**）
+  * **泛型下限**：? extends 父类类名（只能是这个类或者它的**父类**）
 
 
 
@@ -1143,9 +1201,236 @@ Java的**数组工具类：Arrays**
 
 ## 26. Java的Stream流
 
+得益于Java8的Lambda函数式编程，引入的全新概念
+
+目的：**用于简化集合和数组操作的API**（结合Lambda表达式）
+
+思想：
+
+1. 先得到的集合或者数组的Stream流（也就是得到了一条**处理这个集合或者数组的流水线传送带**）
+2. 将集合的元素放到这个流水线上
+3. 然后用Stream的API来操作这些元素
+
+
+
+Stream的三类方法：
+
+*  获取方法：创建一条流水线，并把数据放在流水线上准备进行操作
+
+  * 集合获取Stream：
+
+    （Collection接口）默认stream方法
+
+    ```java
+    default Stream <E> stream();//获取当前集合对象的Stream对象
+    ```
+
+    Map接口获取Stream：
+
+    ```java
+    Map<String,Integer> maps = new HashMap<>();
+    
+    //获取键的流
+    Stream<String,Integer> keyStream = maps.keySet().stream();
+    //获取值的流
+    Stream<String,Integer> valueStream = maps.values().stream();
+    //获取键值对（整体的）流
+    Stream<Map.Entry<String,Integer>> keyValueStream = maps.entrySet().stream();
+    ```
+
+  * 数组获取Stream：
+
+    ```java
+    //用Arrays工具类
+    public static <T> Stream<T> stream(T[] array);//获取当前数组的Stream流
+    
+    //用Stream工具类
+    public static <T> Stream<T> of(T...values);//获取当前数组/可变数据的Stream流
+    ```
+
+    
+
+* 中间方法：流水线上的操作，一次操作完成之后，还可以继续完成其他的操作
+
+  常用中间操作API：
+
+  ```java
+  Stream<T> filter(Predicate<? super T> predicate);//对流中的数据进行过滤，条件对象用Lambda简化，这个方法会遍历集合或数组对象
+  例如：filter(s -> s.startsWith("王"));
+  Stream<T> limit(long maxSize);//获取前几个元素
+  Stream<T> skip(long n);//跳过前几个元素
+  Stream<T> distinct();//去除流中重复的元素，需要依赖hashCode和equals方法
+  static <T> Stream<T> concat(Stream a,Stream b);//将a和b合并为一个流（不同类型的两个流合并为一个流，最终应该合并为Object类型流）
+  Stream<R> map(Function<? super T, ? extends R> mapper);//加工元素方法(第一个泛型为集合原始元素类型 第二个泛型为加工后的最终目标，可以为自定义类型)
+  max、min、sorted
+  ```
+
+  **中间方法返回的流可以继续进行操作**
+
+  
+
+* 终结方法：流水线上的最后一个方法，一个Stream流只能有一个终结方法
+
+  ```java
+  void forEach(Consumer action);//对流的每个元素遍历并操作
+  long count();//返回此流中的元素个数
+  ```
+
+  **终结之后的流无法再继续进行操作**
+
+【注】在Stream流中，**无法直接对集合或数组中的数据进行修改，相当于这是拷贝过来的，进行数据分析**
+
+
+
+Stream流的收集方法：
+
+将一个Stream流中的数据收集起来，重新放在一个集合或者数组中去（也就是将传送带上的货物收集包装起来）（平常开发时，不可以直接传输Stream流对象，所以将流的数据收集起来重新放在一个集合或者数组中去再传输）
+
+```java
+R collect(Collector collector);//开始收集Stream流，指定收集器
+```
+
+* **Collectors工具类：提供具体的收集方法**
+
+  ```java
+  Collectors.toList();//把元素收集到List集合中去
+  注：Java-16开始 可以直接用Stream对象调用toList方法收集为一个List集合 且获得的集合是不可变的
+  Collectors.toSet();//把元素收集到Set集合中去（会去重复）
+  Collectors.toMap();//把元素收集到Map集合中去
+  
+  收集到数组中：
+  Stream对象.toArray();//把元素收集到一个数组中
+  注：一般情况下获取的数组是Object类型的，但是我们也可以直接获取对应类型的数组
+      只需要 向toArray方法传入匿名内部类IntFunction<T[]>，T为想要的类型
+      这样既可直接获得对应类型的数组
+      根据Lambda简化
+      所以可以直击这样写：Stream对象.toArray(String[]::new);//也就是方法引用 以后都这样写了 方便简单
+  ```
+
+【注】一条Stream流收集完了之后就会被关闭，相当于一个终结方法。所以**想再次收集的话，就需要重新获取一条新的Stream流**
 
 
 
 
 
+## 27. Java的异常处理
+
+异常：**在”编译“或者”执行“的过程中可能出现的问题**（语法错误不是，那是水平问题）
+
+* 比如：数组索引越界、空指针异常、日期格式化异常等
+
+异常的出现，如果没有提前处理，那么程序就会退出JVM虚拟机而终止
+
+研究异常、避免异常、提前处理异常、体现程序的安全性健壮性
+
+
+
+异常体系：
+
+**Throwable**：祖宗接口
+
+* **Error**：系统级别错误，比如JVM退出等。代码无法控制，我们**无法处理**
+* **Exception**：**异常类**。表示程序本身**可以处理的问题**
+  * **RuntimeException**及其子类：运行时异常，编译时不会报错（空指针，数组越界）
+  * 除RuntimeException之外的所有的异常：编译时异常，编译期必须处理，否则无法通过编译（日期格式化异常）
+
+
+
+编译时异常：没有继承RuntimeException等相关类，在编译成class文件时必须要处理的异常。
+
+运行时异常：继承RuntimeException或其子类，编译成class文件不需要处理，且不会报错，但在运行字节码文件时可能会出现的异常
+
+
+
+常见运行时异常：（水平型异常）
+
+* 数组索引越界异常：ArrayIndexOutOfBoundsException
+* 空指针异常：NullPointerException（调用空指针的变量的功能就会报错）
+* 数学操作异常：ArithmeticException
+* 类型转换异常：ClassCastException
+* 数字转换异常：NumberFormatException
+
+常见编译型异常：（技术型异常）
+
+* 日期解析异常：ParseException
+
+
+
+**异常的默认处理机制**：（简而言之，**打印异常信息，干掉程序进程**）
+
+1. 默认在出现异常的代码那里自动创建一个异常对象
+2. 异常从方法中出现的点抛出给调用者，调用者最终抛给JVM
+3. JVM接收到异常对象之后，先在控制台直接输出**异常栈**（先指出是什么异常，再指出异常的位置）的信息数据
+4. 直接从当前执行的异常点干掉当前程序
+5. 后续代码无法执行，程序已经死亡
+
+
+
+**编译时异常处理方式**：
+
+一、出现异常直接抛出给调用者，调用者继续抛出去，最终抛给了JVM（也就是默认处理）
+
+* throws：用在方法上，将方法内部的异常抛出去给本方法的调用者处理
+
+  ```java
+  //格式
+  方法名(参数) throws 异常1,异常2,异常3.. {}
+  //虽然抛的异常多，但是最终还是只会抛出一个异常，因为其他的都没机会异常，看谁先出现
+  
+  //抛多个异常的规范处理：统一按Exception抛出
+  方法名(参数) throws Exception {}
+  ```
+
+  
+
+二、出现异常自己捕获处理（**发生异常的方法自己独立完成异常的处理**，程序还可以继续运行）
+
+* try...catch...：监视捕获异常，用在方法内部，将方法内部的异常直接捕获处理
+
+  ```java
+  //格式
+  try{
+      
+  } catch(异常类型1 变量) {
+      
+  } catch(异常类型2 变量) {
+      
+  }...
+  //建议规范格式
+  try{
+      //所有的执行代码
+  } catch(Exception e) {//捕获处理一切的异常类型
+      e.printStackTrace();//打印异常栈信息
+  }
+  ```
+
+  
+
+三、出现异常throws抛出给调用者，调用者捕获处理
+
+* 底层异常抛出去给最外层，最外层集中处理（框架使用）
+
+
+
+**运行时异常处理方式**：
+
+* 可以不处理，因为编译时不报错
+* 建议抛出由最外层捕获处理
+
+
+
+**自定义异常**：（Java无法为世界上的所有异常都提供异常类）
+
+1. 定义一个异常类继承Exception（编译型异常）/继承RuntimeException（运行时异常）
+2. 重写所需构造器
+3. 在出现异常的地方用**throw new 自定义异常对象**抛出
+   * throw：用在方法内部，创建异常对象并抛出
+
+错误很严重就用编译型异常，不是很严重就定义成运行时异常
+
+
+
+
+
+## 2Java的日志框架
 

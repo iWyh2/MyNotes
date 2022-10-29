@@ -135,7 +135,7 @@
   log4j.appender.Al.layout.ConversionPattern=[%t] [%c]-[%p] %m%n
   ```
 
-* MP1的resource下添加mybatis-config..xml文件
+* MP1的resource下添加mybatis-config.xml文件
 
 * 添加UserMapper.xml文件
 
