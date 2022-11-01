@@ -166,6 +166,8 @@ Java的**数组工具类：Arrays**
 ## 12. Java的重载
 
 * 一个类中，多个方法名相同，但形参列表不同，则为重载方法
+* 重载 方法名必须相同，参数类型必须不同，包括但不限于一项，参数数目，参数类型，参数顺序
+  当你的方法名与参数类型与父类相同时，已经是重写了，这时候如果返回类型或者异常类型比父类大，或者访问权限比父类小都会编译错误
 
 
 
@@ -213,6 +215,19 @@ Java的**数组工具类：Arrays**
 
 * this可以调用本类其它构造器，在构造器中this(..)不能与super(..)一起存在
 
+* **重写** 要求**两同两小一大原则**， **方法名相同，参数类型相同**，**子类返回类型小于等于父类方法返回类型**， **子类抛出异常小于等于父类方法抛出异常**， **子类访问权限大于等于父类方法访问权限**。［注意：这里的**返回类型必须要在有继承关系的前提下比较**］
+
+  当你的方法名与参数类型与父类相同时，已经是重写了，这时候如果返回类型或者异常类型比父类大，或者访问权限比父类小都会编译错误
+
+  也就是**重写标准**：
+
+  1. 参数列表必须与被重写方法的相同。（方法名相同，参数类型相同
+  2. 重写方法不能限制比被重写方法更严格的访问级别（子类访问权限大于等于父类方法访问权限
+  3. 重写方法不能抛出新的异常或者比被重写方法声明的检查异常更广的检查异常（子类抛出异常小于等于父类方法抛出异常
+  4. 返回类型必须与被重写方法的返回类型相同（**基础类型时**）。**仅当返回值为类类型时**，重写的方法才可以修改返回值类型，且必须是父类方法返回值的子类。（返回类型必须要在有继承关系的前提下比较，子类返回类型小于等于父类方法返回类型
+
+* **子类从其父类继承所有成员（字段，方法和嵌套类）。 构造函数不是成员，所以它们不被子类继承，但是可以从子类调用超类的构造函数**。
+
 
 
 
@@ -253,6 +268,14 @@ Java的**数组工具类：Arrays**
       public abstract String writeMain();//需要我们自己自定义重写的方法
   }
   ```
+  
+* 关于抽象类
+
+  JDK 1.8以前，抽象类的方法默认访问权限为protected
+
+  JDK 1.8时，抽象类的方法默认访问权限变为default
+
+  
 
 
 
@@ -281,7 +304,7 @@ Java的**数组工具类：Arrays**
 
 * JDK-8之后，允许在接口中直接定义带有方法体的方法
 
-  * 默认方法：类似于写实例方法，但要加上**default**修饰（默认public）
+  * 默认方法：类似于写实例方法，但要加上**default**修饰（既可以是public，也可以是default）
 
     ```java
     default void xxx(){
@@ -320,6 +343,14 @@ Java的**数组工具类：Arrays**
 * 一个类实现了多个接口，多个接口中存在同名的默认方法，不冲突，这个类重写该方法即可
 
 * 一个接口继承多个接口，没有问题，但多个接口中存在规范冲突则不能多继承
+
+* 关于接口
+
+  JDK 1.8以前，接口中的方法必须是public的
+
+  JDK 1.8时，接口中的方法可以是public的，也可以是default的
+
+  JDK 1.9时，接口中的方法可以是private的
 
 
 
@@ -624,11 +655,25 @@ Java的**数组工具类：Arrays**
 
 * Math类（工具类）：
   * abs(int a)：返回参数a的绝对值
+  
   * ceil(double a)：返回a向上取整的值
+  
+    ceil 方法上有这么一段注释：If the argument value is less than zero but greater than -1.0, then the result is negative zero
+  
+    如果参数小于0且大于-1.0，结果为 -0
+  
   * floor(double a)：返回a向下取整的值
+  
+    ceil 和 floor 方法 上都有一句话：
+  
+    If the argument is NaN or an infinity or positive zero or negative zero, then the result is the same as the argument，意思为：如果参数是 NaN、无穷、正 0、负 0，那么结果与参数相同（如果是 -0.0，那么其结果是 -0.0）
+  
   * round(float a)：返回a四舍五入后的值
+  
   * max(int a, int b)：返回两个参数中的最大值
+  
   * pow(dounle a, double b)：返回a的b次幂的值
+  
   * random()：返回0.0 ~ 1.0（不含1.0）的double随机值
 
 
@@ -1336,7 +1381,7 @@ R collect(Collector collector);//开始收集Stream流，指定收集器
 
 
 
-编译时异常：没有继承RuntimeException等相关类，在编译成class文件时必须要处理的异常。
+编译时异常：没有继承RuntimeException等相关类，在编译成class文件时**必须要处理的异常**。
 
 运行时异常：继承RuntimeException或其子类，编译成class文件不需要处理，且不会报错，但在运行字节码文件时可能会出现的异常
 
@@ -1432,5 +1477,232 @@ R collect(Collector collector);//开始收集Stream流，指定收集器
 
 
 
-## 2Java的日志框架
+## 28. Java的日志
+
+日志：记录程序运行过程中的信息
+
+日志技术：可以将系统执行的信息选择性的记录到指定位置（控制台、文件、数据库）
+
+
+
+Java日志体系结构：
+
+* 日志规范接口：
+  * Commons Logging（JCL）
+  * Simple Logging Facade for Java（slf4j）
+* 日志实现框架：
+  * Log4J
+  * JUL：官方JDK里的实现
+  * **Logback**：目前主流，性能较好（相当于Log4j的升级版）
+
+
+
+Logback日志框架：
+
+分为三个模块：
+
+* logback-core：为其他两个模块奠定基础
+* logback-classic：实现了SLF4J API，可视为log4j的升级版本
+* logback-access：与Tomcat和Jetty等Servlet容器集成，提供HTTP访问日志
+
+依赖坐标：
+
+```xml
+<!-- https://mvnrepository.com/artifact/ch.qos.logback/logback-classic -->
+<dependency>
+    <groupId>ch.qos.logback</groupId>
+    <artifactId>logback-classic</artifactId>
+    <version>1.4.4</version>
+    <scope>test</scope>
+</dependency>
+```
+
+核心配置文件：logback.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!--定义日志文件的存储地址 勿在 LogBack 的配置中使用相对路径-->
+    <property name="LOG_HOME" value="D:/logback/log" />
+    <!-- 控制台输出 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- 日志输出编码 -->
+        <Encoding>UTF-8</Encoding>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符-->
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n
+            </pattern>
+        </layout>
+    </appender>
+    <!-- 按照每天生成日志文件 -->
+    <appender name="FILE"  class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <Encoding>UTF-8</Encoding>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!--日志文件输出的文件名-->
+            <FileNamePattern>${LOG_HOME}/myApp.log.%d{yyyy-MM-dd}.log</FileNamePattern>
+            <MaxHistory>30</MaxHistory>
+        </rollingPolicy>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符-->
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n
+            </pattern>
+        </layout>
+        <!--日志文件最大的大小-->
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <MaxFileSize>1MB</MaxFileSize>
+        </triggeringPolicy>
+    </appender>
+ 
+    <!-- 日志输出级别 -->
+    <root level="ALL">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </root>
+ 
+</configuration>
+```
+
+创建logback日志对象：
+
+```java
+public static final Logger LOGGER = LoggerFactory.getLogger("产生日志对象的类名.class");
+```
+
+日志级别：TRACE < DEBUG < WARN < ERROR
+
+默认为DEBUG，且只这些都是对应的方法（可以用LOGGER调用）、
+
+
+
+## 29. Java的File类
+
+File类代表操作系统中的文件对象（包括文件和文件夹）
+
+File类功能：
+
+* 定位文件
+* 获取文件本身信息
+* 删除文件
+* 创建文件（或者是创建文件夹）
+* **无法读写文件内容**
+
+
+
+构造方法：
+
+```java
+File(String pathname);//最常用的，填入文件路径即可
+文件路径："D:\\xxxx\\xxx.jng"(双反斜杆防止转义字符) 或者："D:/xxxx/xxx.jng" 或者用File.separator自适应生成分隔符，文件路径用字符串拼接
+File(String parent, String child);//从父路径名字符串和子路径名字符串创建文件对象
+File(File parent, String child);//根据父路径对应的文件对象和子路径字符串创建文件对象
+```
+
+支持**绝对路径**（从盘符开始 D:/xxx)、相对路径（一般用于定位模块中的文件，相对到工程文件下，也就是**从你想使用相对路径的项目工程文件开始**）
+
+File可以是文件夹，取它的大小是没有意义的，文件夹的大小无法取得，文件大小可以，一般定位文件夹用于判断路径是否存在
+
+File封装的对象仅仅是一个路径名，可以是存在的，也可以是不存在的（不存在的话可以后面自己根据这个自己创建出来）
+
+
+
+常用API：
+
+```java
+boolean isDirectory();//判断此文件对象是否为文件夹（Directory，也就是目录）（D盘是一个文件夹 D:\）
+boolean isFile();//判断文件对象是否为文件
+boolean exists();//判断文件对象是否存在
+String getAbsolutePath();//返回文件对象的绝对路径字符串（必须获取绝对路径）
+String getPath();//返回文件对象的路径名字符串（可以是绝对路径，也可以是相对路径，看文件对象封装的是什么路径）
+String getName();//返回文件对象代表的文件或文件夹的名称
+long lastModified();//返回文件最后被修改的毫秒值
+long length();//返回文件对象的大小（字节大小）
+
+//File类创建文件API
+boolean creatNewFile();//将封装的文件路径代表的文件创建出来，已存在就创建失败（一般不用这个，因为在IO流中，写文件内容时会自动帮我们创建出来）
+boolean mkdir();//将封装的文件路径创建出来，创建一级文件夹，不能创建多级文件夹（只能D:/aaa，不能D:/aaa/aa）
+Boolean mkdirs();//创建多级文件夹，一般用这个（可以D:/aaa/aa）
+
+//删除文件API
+boolean delete();//删除这个文件对象代表的文件或者空文件夹
+//delete方法直接删除，不会给你放在回收站
+//删除一个文件，文件被占用依然可以直接删除
+//默认只能删除空文件夹，不能删除非空文件夹（可以自己写算法删除非空文件夹）
+
+//遍历文件API
+String[] list();//获取文件对象代表的文件夹下所有的“一级文件名称”到一个字符串数组中
+File[] listFiles();//获取文件对象代表的文件夹下所有的“一级文件对象”到一个文件对象数组中（一般用这个）
+//遍历的调用者必须是文件夹，为文件时返回null
+//调用的文件夹必须存在，不存在返回null
+//有内容时，将一级文件的绝对路径封装为File类对象放到File数组返回，有隐藏文件也会被找到并放进去
+```
+
+
+
+文件搜索：递归方式，从文件夹中搜索想要的文件或者文件夹 
+
+```java
+//1.传入文件夹 和 想要找的文件
+public static void searchFile(File dir, String fileName) {
+    //2.判断传入的是否合法 且是否是文件夹
+    if (dir != null && dir.isDirectory()) {
+        //3.提取当前文件夹下的所有一级文件到一个文件对象数组中
+        File[] files = dir.listFiles();
+        //4.判断当前文件夹是否存在一级文件（不为空文件夹且不为null）
+        if (files != null && files.length > 0) {
+            //5.遍历所有一级文件
+            for (File file : files) {
+                //6.判断遍历的当前一级文件是 文件 还是 文件夹
+                if (file.isFile()) {
+                    //7.是文件，那么判断这个文件是不是想要找的
+                    if (file.getName().contains(fileName)) {
+                        //找到之后的操作逻辑
+                    }
+                } else {
+                    //7.是文件夹，那么以这个文件夹递归继续寻找
+                    searchFile(file, fileName);
+                }
+            }
+        }
+    }
+}
+```
+
+拓展知识：启动.exe文件
+
+```java
+Runtime r = Runtime.getRuntime();
+r.exec(file.getAbsolutePath());
+```
+
+
+
+
+
+## 30. Java的IO流
+
+IO流前置知识：**字符集**
+
+给人类字符进行编号存储，这些**编号规则**就是字符集
+
+* ASCII字符集：**一个字节一个字符**，一个字节八位（包含英文，数字，符号，都是一个字节）
+* GBK字符集：**兼容ASCII字符集**，同时**一个中文汉字两个字节**（包含几万汉字，繁体，部分日韩文字）
+* Unicode字符集：**兼容ASCII字符集**，**常用UTF-8编码，一个中文三个字节**（全世界通用，也叫统一码）
+
+**编码前和编码后字符集要一致，不然会中文乱码**
+
+编码解码操作：
+
+```java
+String编码：
+byte[] getBytes();//使用平台默认的字符集将String编码为一系列字节，将结果存储到新的字节数组中
+byte[] getBytes(String charsetName);//使用指定字符集将string编码为一系列字节，将结果存储到新的字节数组中
+
+String解码：
+String(byte[] bytes);//使用平台默认的字符集将指定字节数组解码构造为新的String
+String(byte[] bytes, String charsetName);//使用指定字符集将将指定字节数组解码构造为新的String
+```
+
+
+
+
 

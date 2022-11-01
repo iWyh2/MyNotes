@@ -504,9 +504,9 @@ Druid也没有被收录，可惜
 后端：
 
 * 实体类开发：Lombok技术
-* Dao开发：MP技术
+* Dao开发：MP技术 -继承BaseMapper，设置@Mapper
   * 测试：数据层测试类
-* Service开发：MP技术
+* Service开发：MP技术 -继承IService
   * 测试：业务层测试类
 * Controller开发：RESTful开发
   * 测试：Postman测试接口
@@ -557,10 +557,140 @@ MP还可以为业务层进行快速开发，提高效率
 
 
 
+## [知识补充] 前后端数据协议
+
+用于后端与前端进行**数据格式的统一**
+
+将**表现层返回的结果统一为模型类**
+
+根据需求自行设定，没有固定格式
+
+例如：
+
+```java
+@Data
+public class Data {
+	private Boolean flag;
+	private Object content;
+    
+    public Data() {
+    }
+
+    public Data(Boolean flag) {
+        this.flag = flag;
+    }
+
+    public Data(Boolean flag, Object content) {
+        this.flag = flag;
+        this.content = content;
+    }
+}
+```
+
+
+
+前后端分离结构设计中，页面归属前端服务器
+
+单体工程中**页面资源放置在resources目录下的static目录中**（在做页面之前先执行一下maven的clean，防止bug）
 
 
 
 
-# [应用篇]
+
+## [知识补充] 表现层统一异常处理
+
+将整个项目的异常抛到表现层（controller层）进行集中处理
+
+将所有异常分为三类：
+
+* 系统异常
+* 业务异常
+* 其他未知异常
+
+根据需求自定义系统异常和业务异常类
+
+```java
+@RestControllerAdvice//为REST风格的控制器做增强功能的注解
+public class ProjectExceptionAdvice{
+    @ExceptionHandler(SystemException.class)//系统异常处理器
+    public Result doSystemException(SystemException e) {
+        //记录日志
+        //发送消息给运维
+        //发送邮件给开发人员。e对象也发给开发人员
+        return new Result(e.getCode(),e.getMessage());
+    }
+
+    @ExceptionHandler(BusinessException.class)//业务异常处理器
+    public Result doBusinessException(BusinessException e) {
+        return new Result(e.getCode(),e.getMessage());
+    }
+
+    @ExceptionHandler(Exception.class)//其他未知异常处理器
+    public Result doException(Exception e) {
+        //记录日志
+        //发送消息给运维
+        //发送邮件给开发人员。e对象也发给开发人员
+        return new Result(Code.UNKNOWN_ERR,"系统繁忙，请稍后再试");
+    }
+}
+```
+
+
+
+
+
+# [实用篇]
+
+## [运维实用篇]
+
+## 1. 打包与运行⚙
+
+> 为什么要打包？
+>
+> ：通俗一点来说，你在你电脑上写完了项目，总不能把你电脑捐给公司当服务器运行项目吧？所以要**将项目打包到公司服务器电脑运行**
+
+
+
+### 项目打包-Windows环境
+
+1. 将SpringBoot项目**进行Maven的打包指令：mvn package**
+
+   在**打包之前最好要clean一下**，保证打包的环境是干净的
+
+   同时，由于我们在项目里创建了测试类进行mapper与service的测试，所以在打包执行package指令的时候，maven还会执行test指令去测试，会造成不必要的数据污染，所以我们**要跳过maven的测试环节**（mvn指令：-D skipTests（全部跳过测试）或者IDEA直接点击mavenhelper的窗口执行）
+
+2. 运行打包好的项目：在jar包的目录下，在文件路径栏输入cmd，即可直达该目录下，执行启动指令（**java -jar SpringBootxxxx(打包好的jar包名).jar**）（直接**输入首字母再按TAB键自动补全**）
+
+   **jar包支持命令行启动需要依赖maven插件**（spring-boot-maven-plugin）支持，需要确保在打包之前项目拥有此插件
+
+
+
+
+
+
+
+## 2. 配置高级🛠
+
+
+
+
+
+## 3. 多环境开发💻
+
+
+
+
+
+## 4. 日志📝
+
+
+
+
+
+## [开发实用篇]
+
+
+
+
 
 # [原理篇]
