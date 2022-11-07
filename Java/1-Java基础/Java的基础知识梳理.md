@@ -294,6 +294,8 @@ Java的**数组工具类：Arrays**
 
 * 接口是一种规范，默认为public abstract/public static final
 
+  Java8才开始可以被abstract修饰
+
 * 子类（实现类）用implements实现接口
 
 * 要重写完抽象方法
@@ -1701,6 +1703,189 @@ String解码：
 String(byte[] bytes);//使用平台默认的字符集将指定字节数组解码构造为新的String
 String(byte[] bytes, String charsetName);//使用指定字符集将将指定字节数组解码构造为新的String
 ```
+
+
+
+IO流：也叫输入输出流
+
+input - 输入、读
+
+output- 输出、写
+
+按流中**数据最小单位划分**：
+
+* **字节流：操作所有类型文件，但主要是音视频文件**
+* **字符流：只能操作纯文本文件，也就是java文件，txt文本等**
+
+按流的传递方向划分：
+
+* 输入流
+  * 字符输入
+  * 字节输入
+* 输出流
+  * 字符输出
+  * 字节输出
+
+
+
+IO流体系：
+
+* 字节流
+
+  * **InputStream**：字节输入流（抽象类）
+
+    * **FileInputStream**：文件字节输入流
+
+      作用：将磁盘文件以字节形式读取到内存中
+
+      构造方法：
+
+      ```java
+      public FileInputStream(File file);//创建字节输入流与文件对象代表的源文件接通
+      public FileInputStream(String pathname);//创建字节输入流与文件路径代表的源文件接通（内部帮你new File）
+      ```
+
+      方法：
+
+      ```java
+      public int read();//每次连续读取一个字节返回，没有可读的或直到全部读取完毕返回-1
+      //读取中文时会截断导致乱码
+      
+      public int read(byte[] buffer);//每次读取一个字节数组返回读取的长度，没有可读的或直到全部读取完毕返回-1
+      //用同一个固定长度的字节数组读取，可能会有污染数据现象
+      //解决方法就是读取完毕后“倒掉”，也就是读取多少先使用掉清空字节数组，再去读取
+      //依然会有读取截断中文的乱码现象
+      
+      //解决字节流读取截断中文乱码现象：一次性读取完所有字节（与文件大小一样大的字节数组）
+      public byte[] readAllBytes() throws IOException;//将文件所有字节装入字节数组返回，不支持超大文件
+      ```
+
+      
+
+  * **OutputStream**：字节输出流（抽象类）
+
+    * **FileOutputStream**：文件字节输出流
+
+      作用：将内存数据以字节形式写到磁盘文件中
+
+      构造方法：
+
+      ```java
+      public FileOutputStream(File file);//创建字节输出流与文件对象代表的源文件接通，构造都是不需要文件存在，不存在自动创建，存在则覆盖
+      public FileOutputStream(File file, boolean append);//创建字节输出流与文件对象代表的源文件接通，是否追加数据，不追加则覆盖
+      public FileOutputStream(String pathname);//创建字节输出流与文件路径代表的源文件接通
+      public FileOutputStream(String pathname, boolean append);//创建字节输出流与文件路径代表的源文件接通，是否追加数据，不追加则覆盖
+      ```
+
+      方法：
+
+      ```java
+      public void write(int a);//写一个字节出去，不可以写单个中文，会乱码
+      public void write(byte[] buffer);//写一个字节数组出去（将中文转为字节数组再写/实现写出去的数据可以换行：write("\r\n".getBytes())）
+      public void write(byte[] buffer, int pos, int len);//写一个字节数组的部分出去
+      
+      //写数据必须要刷新数据，因为这个类自带了一些缓冲区，防止写的数据还在缓冲区没有真的写到文件中去
+      flush();//刷新流，让数据生效，刷新完可以继续写数据
+      close();//关闭流，释放资源，在关闭之前会先自动刷新流，关闭后不可以再写数据
+      ```
+      
+    
+  * 文件拷贝实现：字节输入流和字节输出流可以操作一切文件，适合文件拷贝。拷贝前后编码要一致
+
+    ```java
+    public void FileCopy(String SourceFile, String Des) {
+    	try {
+            //1.与目标文件接通
+            InputStream is = new FileInputStream(SourceFile);
+            //2.与目的路径接通
+            OutputStream os = new FileOutputStream(Des);
+            //3.转移数据 -- 也可以直接用输入流的readAllBytes方法，然后再全部输出
+            byte[] buffer = new byte[1024];
+            int len = 0;
+            while((len = is.read(buffer)) != -1) {
+                os.write(buffer,0,len);
+            }
+            os.flush();
+            os.close();
+            System.out.println("Copy 完成");
+        } catch(Exception e) {
+            e.printStackTrace();
+        } 
+    }
+    ```
+
+    
+
+  * 资源释放：
+
+    * try-catch-finally：在异常处理时提供finally块执行必要操作，比如IO流的资源释放
+
+      特点：**finally内的语句一定会执行**，除非JVM退出，且都有return语句的话，try或catch内的return会将返回值临时存储到一个内存区内，然后**finally的return的返回值会覆盖掉这个临时return值并返回**
+
+      格式：**try{}catch{}finally{}**
+
+    * try-with-resource：
+
+      格式：jdk8之前为 ：**try(只能放置定义资源对象){}catch{}..**（资源对象用完后会自动关闭，会自动调用该对象的close方法，即使出现异常也会关闭）
+
+      【注】资源对象：实现了Closeable/AutoCloseable接口的对象，重写close方法
+
+      jdk9之后，可以在try外部new资源对象，然后传入资源对象引用：try(资源1引用;资源2引用..){}catch{}..（不常用）
+
+
+
+* 字符流：按字符读取，更适合读取中文、文本
+
+  * **Reader**：字符输入流（抽象类）
+    * **FileReader**：文件字符输入流
+    
+      作用：将文件数据以字符的形式读取到内存
+    
+      构造方法：
+    
+      ```java
+      public FileReader(File file);//创建字符输入流与文件对象代表的源文件接通
+      public FileReader(String pathname);//创建字符输入流与文件路径代表的源文件接通
+      ```
+    
+      方法：
+    
+      ```java
+      public int read();//每次读取一个字符返回字符的编码，没有字符可读则返回-1（编码一致，读取中文不会乱码）
+      public int read(char[] buffer);//每次读取一个字符数组返回字符数组长度（按字符个数算长度），没有字符可读则返回-1
+      ```
+    
+      
+    
+  * **Writer**：字符输出流（抽象类）
+    * **FileWriter**：文件字符输出流
+    
+      作用：将内存数据以字符形式写到磁盘文件
+    
+      构造方法：
+    
+      ```java
+      public FileWriter(File file);//创建字符输出流与文件对象代表的源文件接通，写文件不需要存在，没有就创建，有就覆盖
+      public FileWriter(File file,boolean append);//创建字符输出流与文件对象代表的源文件接通，可以追加数据
+      public FileWriter(String filepath);//创建字符输出流与文件路径代表的源文件接通，文件不需要存在，没有就创建，有就覆盖
+      public FileWriter(String filepath,boolean append);//创建字符输出流与文件路径代表的源文件接通，可以追加数据
+      ```
+    
+      方法：
+    
+      ```java
+      void wirte(int c);//写一个字符，虽然是int，但是可以写字符和字符编码
+      void wirte(char[] charbuffer);//写一个字符数组
+      void wirte(char[] charbuffer,int begin,int len);//写字符数组的一部分
+      void wirte(String str);//写一个字符串
+      void wirte(String str,int begin,int len);//写字符串的一部分
+      
+      //写数据必须要刷新数据，因为这个类自带了一些缓冲区，防止写的数据还在缓冲区没有真的写到文件中去
+      flush();//刷新流，让数据生效，刷新完可以继续写数据
+      close();//关闭流，释放资源，在关闭之前会先自动刷新流，关闭后不可以再写数据
+      ```
+    
+      
 
 
 

@@ -1026,10 +1026,10 @@ div {
 <style>
    h1 {
         text-align: center;
-      }
    }
+
    body {
-​    text-align: center;
+      text-align: center;
    }
   </style>
 ...

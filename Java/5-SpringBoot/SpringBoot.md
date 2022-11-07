@@ -393,10 +393,11 @@ users: [{name:wyh,age:19},{name:zyh,age:19}]
 
 ## 整合MyBatis📌
 
-MyBatis框架：
-
-* 核心配置：数据库连接相关信息
-* 映射配置：SQL映射（XML或者注解开发）
+> MyBatis框架：
+>
+> * 核心配置：数据库连接相关信息
+> * 映射配置：SQL映射（XML或者注解开发）
+>
 
 
 
@@ -657,13 +658,34 @@ public class ProjectExceptionAdvice{
 
    在**打包之前最好要clean一下**，保证打包的环境是干净的
 
-   同时，由于我们在项目里创建了测试类进行mapper与service的测试，所以在打包执行package指令的时候，maven还会执行test指令去测试，会造成不必要的数据污染，所以我们**要跳过maven的测试环节**（mvn指令：-D skipTests（全部跳过测试）或者IDEA直接点击mavenhelper的窗口执行）
+   同时，由于我们在项目里创建了测试类进行mapper与service的测试，所以在打包执行package指令的时候，maven还会执行test指令去测试，会造成不必要的数据污染，所以我们**要跳过maven的测试环节**（mvn指令：-D skipTests（全部跳过测试）或者IDEA直接点击mavenhelper的窗口执行跳过测试）
 
 2. 运行打包好的项目：在jar包的目录下，在文件路径栏输入cmd，即可直达该目录下，执行启动指令（**java -jar SpringBootxxxx(打包好的jar包名).jar**）（直接**输入首字母再按TAB键自动补全**）
 
-   **jar包支持命令行启动需要依赖maven插件**（spring-boot-maven-plugin）支持，需要确保在打包之前项目拥有此插件
+   **jar包支持命令行启动需要依赖maven打包插件**（spring-boot-maven-plugin）支持，需要确保在打包之前项目拥有此插件（否则打包的项目无法独立运行，因为插件会把项目需要的依赖jar包和需要的工具包都会打包在一起）且没有打包插件，打包完的jar包描述文件（MANIFEST.MF）也不一样，会缺少SpringBoot的jar启动器和项目的引导类位置信息
 
 
+
+[知识补充] Windows环境端口被占用时解决方案（一般不会用到）：
+
+```properties
+#查询端口
+netstat -ano
+#查询指定端口
+netstat -ano |findstr "端口号"
+#根据进程PID查询进程名称
+tasklist |findstr "进程PID号"
+#根据PID杀死任务
+taskkill /F /PID "进程PID号"
+#根据进程名称杀死任务
+taskkill -f -t -im "进程名称"
+```
+
+
+
+### 项目打包-Linux环境
+
+跳过了这一章节（P56）之后学了Linux补充（2022/11/2)
 
 
 
@@ -671,11 +693,288 @@ public class ProjectExceptionAdvice{
 
 ## 2. 配置高级🛠
 
+> 项目配置的高级操作
+
+
+
+### 临时属性设置
+
+> 一般会有风险性，不常用
+>
+> 可用于加载自定义配置文件
+
+
+
+**命令行带属性参数启动SpringBoot项目**：java -jar SpringBootxxxx(打包好的jar包名).jar **--属性1=值 --属性2=值...**
+
+例如设置端口号：java -jar SpringBootxxxx(打包好的jar包名).jar --server.port=80
+
+多个属性启动时，属性之间用空格分隔
+
+
+
+命令行设置的**临时属性的传参入口就是SpringBoot的引导类main方法的args参数**，没有这个参数那么就不可以设置临时属性
+
+
+
+【属性加载优先顺序】 [参考官网](https://docs.spring.io/spring-boot/docs/current/reference/html/spring-boot-features.html#boot-features-external-config)（命令行 > 配置文件）
+
+
+
+
+
+### 配置文件
+
+> 开发时我们会自己写一套配置，但是在项目上线之前，项目经理会修改这些配置
+>
+> 为了方便修改配置，所以SpringBoot有着配置文件分级
+
+
+
+配置文件的四级：
+
+* 一级（最高级）：**项目jar包所处目录下的config目录(自己建的)中**的配置文件
+* 二级：**项目jar包所处目录下**的配置文件
+* 三级：（IDEA中）**项目放置配置文件的resources目录下的config目录(自己建的)中**的配置文件
+* 四级（最低级）：SpringBoot给你自动创建的配置文件的位置（**resources目录**）
+
+作用：
+
+* 一级与二级作为系统打包后设置的通用属性
+  * 一级一般是运维经理进行线上整体项目部署方案调控
+* 三级与四级用于系统开发阶段设置通用属性
+  * 三级一般用于项目经理进行整体项目属性调控
+
+
+
+【注】已知级别：properties > yml > yaml
+
+【注】classpath指的是资源文件路径
+
+
+
+
+
+### 自定义配置文件
+
+> 防止一些老六同事为项目开后门
+
+
+
+**可以更改配置文件默认的application名称**
+
+更改之后若是启动项目的话，Springboot会去搜寻叫application的配置文件加载
+
+此时我们可以**用启动参数指定加载我们更改名字之后的秘密配置文件**（也就是设置临时属性**spring.config.name**=xxx，或者**spring.config.location**=classpath:/xxx.yml）
+
+命令行设置或者**IDEA的编辑运行/调试配置中设置程序实参**
+
+可以**同时设置多个，但是最后一个才生效，覆盖思想**（多配置文件用于将配置进行分类，进行独立管理，将可选配置单独制作，便于上线更新维护）
+
+
+
+说明：
+
+单服务器项目：使用自定义配置文件的需求很低
+
+多服务器项目：使用自定义配置文件的需求较高，且将所有的配置放在一个目录中统一管理
+
 
 
 
 
 ## 3. 多环境开发💻
+
+> 开发时和上线时的配置环境是不一样的
+
+
+
+在一个配置文件application.yml中：
+
+```yml
+#公共配置 --配置公共的配置，同时可以设置应用环境
+spring:
+	profiles:
+	  active: pro
+--- #分隔环境，区分环境
+#设置环境 --配置该环境的独有的配置，不同环境配置加载不同
+
+#生产环境
+spring:
+	profiles: pro
+server:
+  port: 80
+---
+#开发环境
+spring:
+	profiles: dev
+server:
+  port: 81
+---
+#测试环境
+spring:
+	profiles: test
+server:
+  port: 82
+```
+
+
+
+
+
+### 自定义多环境文件
+
+> 在一个主配置文件中设置多环境属性会有安全隐患，所以可以将这一份文件一分为四，用独立的配置文件定义环境属性
+
+
+
+**application.yml**：
+
+```yml
+#公共配置 --配置公共的配置，同时可以设置应用环境
+spring:
+	profiles:
+	  active: pro
+```
+
+**application-pro.yml**：
+
+```yml
+#生产环境
+server:
+  port: 80
+```
+
+**application-dev.yml**：
+
+```yml
+#开发环境
+server:
+  port: 81
+```
+
+**application-test.yml**：
+
+```yml
+#测试环境
+server:
+  port: 82
+```
+
+
+
+【注】properties类文件和yaml类文件是一样设置的，只是后缀和书写格式不一样，其余的都一样，包括属性名
+
+
+
+多环境开发配置文件书写：
+
+* 主配置文件设置公共属性
+* 环境配置文件设置冲突属性（独特的属性）
+
+* 可以根据功能对配置文件的配置信息进行拆分，制作为独立的配置文件（也就是控制文件的细粒度）
+
+  * 如：**application-devDB.yml**/**application-devRedis.yml**/**application-devMVC.yml**
+
+  * 在主配置文件中，用**include属性**，在激活指定的环境下，同时对多个环境进行加载并使其生效（多个环境之间用逗号隔开）
+
+    例如：
+
+    ```yml
+    spring:
+      profiles:
+        active: dev #在开发环境下（主环境）
+        include: devDB,devRedis,devMVC #加载开发环境下的DB Redis MVC环境
+    ```
+
+    
+
+    【注】当主环境dev与其他小环境有相同属性时，主环境的生效；其他小环境有相同属性时，则后加载的生效（覆盖）
+
+    【注】SpringBoot**2.4版本开始使用group属性代替include**
+
+    例如：
+
+    ```yml
+    spring:
+      profiles:
+        active: dev #在开发环境下
+         group: 
+        	"dev": devDB,devRedis,devMVC
+        	"pro": proDB,proRedis,proMVC
+           "test": testDB,testRedis,testMVC
+    ```
+
+
+
+
+
+### 多环境开发控制
+
+> 假设SpringBoot和Maven都设置了配置环境，那么SpringBoot以Maven配置的环境为主
+
+
+
+如果Maven设置了多环境属性，同时还设置了多环境变量（如：profile.active）
+
+那么在SpringBoot中引用这个变量即可：
+
+```yml
+spring:
+	profiles:
+	  active: @profile.active@ #引用maven中设置的环境变量（用@..@占位符）
+```
+
+
+
+
+
+### [知识补充] Maven多环境设置
+
+在pom文件中配置多环境属性：
+
+```xml
+<!--定义多环境-->
+<profiles>
+	<!--定义具体生产环境-->
+	<profile>
+		<!--定义环境唯一id-->
+		<id>env_dev</id>
+		<!--定义环境中专用自定义属性-->
+		<properties>
+            <!--设置环境变量-->
+            <profiles.active>dev</profiles.active>
+			<jdbc.url>jdbc:mysql:///db1?useServerPrepStmts=true</jdbc.url>
+		</properties>
+		<!--设置默认启动-->
+        <activation>
+			<activeByDefault>true</activeByDefault>
+        </activation>
+	</profile>
+    <!--定义具体生产环境-->
+    <profile>
+		<!--定义环境唯一id-->
+		<id>env_test</id>
+        <!--定义环境中专用自定义属性-->
+		<properties>
+            <!--设置环境变量-->
+            <profiles.active>test</profiles.active>
+			<jdbc.url>jdbc:mysql://127.1.1.1:3306/db1?useServerPrepStmts=true</jdbc.url>
+        </properties>
+    </profile>
+    <!--定义具体生产环境-->
+    <profile>
+        <!--定义环境唯一id-->
+		<id>env_pro</id>
+        <!--定义环境中专用自定义属性-->
+		<properties>
+            <!--设置环境变量-->
+            <profiles.active>pro</profiles.active>
+			<jdbc.url>jdbc:mysql://127.2.2.2:3306/db1?useServerPrepStmts=true</jdbc.url>
+		</properties>
+	</profile>
+</profiles>
+```
 
 
 
@@ -683,11 +982,388 @@ public class ProjectExceptionAdvice{
 
 ## 4. 日志📝
 
+> 日志作用：
+>
+> * 编程期间调试代码
+> * 经营期间记录信息
+>   * 记录日常运营信息（峰值流量）
+>   * 记录应用报错信息（错误堆栈）
+>   * 记录运维过程数据（扩容、宕机、报警）
+>
+> 
+>
+> SpringBoot默认使用**Logback日志框架**
+
+
+
+### 日志基础
+
+1. 在某一层的类中定义创建日志对象：（需要优化）
+
+   ```java
+   public static final Logger log = LoggerFactory.getLogger(产生日志对象的类名.class);
+   
+   //如：
+   public static final Logger log = LoggerFactory.getLogger(BookController.class);
+   ```
+
+2. 在控制台输出日志信息：
+
+   * log.debug("");
+   * log.info("");
+   * log.warn("");
+   * log.error("");
+
+
+
+日志级别：TRACE < DEBUG < INFO < WARN < ERROR < FATAL(归入到ERROR)
+
+设置日志输出级别：
+
+```yml
+#开启SpringBoot的debug模式，输出springboot的调试信息，检查系统运行状况
+debug: true
+
+#设置日志输出级别
+logging:
+  gruop: #设置分组
+   ebank: com.wyh.controller,com.wyh.dao
+   iservice: com.wyh
+
+  level:
+    root: debug #root表示根节点，也就是整体应用的日志级别
+    com.wyh.controller: debug #设置某个包的日志级别
+    ebank: debug #(先设置分组) 为对应的组设置日志输出级别
+```
+
+
+
+
+
+### [知识补充] 优化日志对象的创建
+
+> 在每一层的类中定义创建一个日志对象耦合度很高且不优雅美观
+
+
+
+使用**Lombok提供的注解**：**@Slf4j** 简化开发，减少日志对象的声明创建操作
+
+将@Slf4j注解添加在需要做日志输出的类上，然后**调用提供的log对象输出日志**即可
+
+
+
+
+
+### 日志输出格式控制
+
+默认的日志格式：时间+级别+PID+所属线程+所属类/接口名+日志信息
+
+* PID：进程的ID，用于表明当前操作所处的进程，当多服务同时记录日志时，该值可用于协助程序员调试程序
+* 所属类/接口名：显示的信息为Springboot重写后的信息，名称过长会被简化
+
+
+
+设置日志输出格式：
+
+```yml
+logging:
+	pattern:
+	  console: %d %clr(%p) --- [%16t] %clr(%-40.40c){cyan} : %m %n
+```
+
+* %d：日期 | %m：消息 | %n：换行 | %p：日志级别 | %clr()：颜色 | %t：线程名 | %c：类名
+* 加上数字代表占多少位
+
+
+
+
+
+### 日志文件
+
+> 日志总不能一直在控制台的吧？所以要记在文件里面
+
+
+
+设置日志文件：
+
+```yml
+logging:
+	file: #设置日志文件 -server.log  -在当前项目的同级目录下产生
+	  name: server.log
+	logback:
+		rollingpolicy: #设置日志文件的详细配置 -滚动策略 循环记录日志
+		  max-file-size: 3KB #设置日志的最大大小
+		  file-name-pattern: server.%d{yyyy-MM-dd}.%i.log #设置文件的名字格式（%i为序号）
+```
+
 
 
 
 
 ## [开发实用篇]
+
+
+
+### 1. 热部署🔧
+
+> 热部署也就是想更改了项目之后立马就生效，相当于不停服更新
+
+
+
+#### 手动启动热部署
+
+服务器是在SpringBoot里面的一个类了，所以服务器是受SpringBoot管控的，那么我们需要用到SpringBoot提供的工具
+
+
+
+添加开发者工具：（内含热部署工具）
+
+```xml
+<dependency>
+	<groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-devtools</artifactId>
+    <optional>true</optional>
+</dependency>
+```
+
+修改了项目里面的配置之后，不关掉服务器的情况下激活热部署更新：ctrl+F9（IDEA的build project）
+
+
+
+【注】重启（Restart）：重新加载自定义的开发代码（包含类，页面，配置文件）加载位置在restart类加载器
+
+【注】重载（ReLoad）：重新加载jar包，加载位置在base类加载器
+
+【注】**热部署是执行的重启**，**加载开发者自定义资源**，**不加载jar包**
+
+
+
+
+
+#### 自动启动热部署
+
+> 手动启动依然麻烦，自动最好
+
+
+
+设置自动热部署：
+
+**IDEA设置 -> 构建、执行、部署 -> 编译器 -> 勾选 自动构建项目**
+
+**IDEA设置 -> 高级设置 -> 编译器 -> 勾选 即使项目在运行也自动make**
+
+这样设置好之后，那么**在IDEA失去焦点之后的五秒内可以自动构建**
+
+
+
+
+
+#### 热部署范围配置
+
+默认**不触发热部署**的目录列表：
+
+* /META-INF/maven
+* /META-INF/resources
+* /resources
+* /static
+* /public
+* /templates
+
+
+
+自定义不参与热部署的文件或者文件夹：
+
+```yml
+devtools:
+   restart:
+     exclude: public/**,static/**
+```
+
+
+
+
+
+#### 关闭热部署
+
+> 热部署只在开发环境有效
+
+
+
+关闭热部署：
+
+```yml
+devtools:
+	restart:
+		enabled: false
+```
+
+
+
+【注】有些时候会有人在其他地方设置，然后开启了这个热部署，所以我们需要考虑**属性加载顺序**（[参考官网](https://docs.spring.io/spring-boot/docs/current/reference/html/spring-boot-features.html#boot-features-external-config)），在高级的一层覆盖掉低级一层的设置，让启动热部署失效
+
+
+
+
+
+### 2. 配置高级🛠
+
+
+
+#### @ConfigurationProperties
+
+> 在YAML文件中，在Java类上添加**@ConfigurationProperties**注解，**指定想封装的部分属性名**（prefix）是什么，好针对性的封装
+>
+> **针对性读取YAML中想要的对象属性**（**部分属性读取**）
+
+
+
+除此之外，@ConfigurationProperties可以**为第三方bean绑定属性**
+
+也就是读取YAML文件中的属性，然后添加到对应的bean中
+
+`@ConfigurationProperties(prefix="xxxx")`：prefix为YAML中对应的属性对象的属性名
+
+
+
+【注】**@EnableConfigurationProperties注解**：**将添加了@ConfigurationProperties注解的类加入到Spring容器中**，因此添加了@ConfigurationProperties注解的类上面**无需再添加@Component注解将其添加到Spring容器中**（也就是@EnableConfigurationProperties不能与@Component同时使用）
+
+格式：@EnableConfigurationProperties({类数组})（如：@EnableConfigurationProperties({ServerConfig.class})）
+
+【注】解除使用@ConfigurationProperties注释的警告：添加如下依赖坐标即可
+
+```xml
+<dependency>
+     <groupId>org.springframework.boot</groupId>
+     <artifactId>spring-boot-configuration-processor</artifactId>
+</dependency>
+```
+
+
+
+
+
+#### 宽松绑定/松散绑定
+
+**@ConfigurationProperties**绑定属性**支持属性名宽松绑定**
+
+也就是支持属性名为**驼峰、下划线、中划线、常量大写**
+
+且在@ConfigurationProperties**注解内的prefix**有命名规范：**仅能使用纯小写字母，数字，下划线**
+
+
+
+【注】@Value注解不支持松散绑定
+
+
+
+
+
+#### 常用计量单位绑定
+
+> SpringBoot支持JDK8提供的时间与空间计量单位
+>
+> 用于在需要绑定属性的属性类内，表示具体大小单位
+
+
+
+表示时间范围的类：**Duration**（一般用于表示服务器超时时间）
+
+* **默认单位为秒(s)**，可以在类属性上添加@DurationUnit注解，设置时间的单位（年月日时分秒等）
+
+表示空间大小的类：**DataSize**（一般用于表示存储空间的大小）
+
+* **默认单位为Byte(B)**，可以在类属性上添加@DataSizeUnit注解，设置空间单位（B、KB、GB、TB等）
+
+
+
+
+
+#### 数据校验
+
+> 开启数据校验有助于系统的安全性
+>
+> J2EE规范中的**JSR303规范**定义了一组有关数据校验的相关API
+
+
+
+对于@ConfigurationProperties注解读取的YAML文件的数据，我们需要校验数据的合法性
+
+1. 首先添加JSR303规范（这是能校验数据的大前提）
+
+   ```xml
+   <dependency>
+         <groupId>javax.validation</groupId>
+         <artifactId>validation-api</artifactId>
+   </dependency>
+   ```
+
+2. 为需要校验的字段添加校验注解：比如@Max、@Min等，为校验规则
+
+3. 规范只是校验的大前提，并不是实现，没有实现会报错，所以我们还需要添加校验的实现：Hibernate校验框架
+
+   ```xml
+   <dependency>
+         <groupId>org.hibernate.validator</groupId>
+         <artifactId>hibernate-validator</artifactId>
+   </dependency>
+   ```
+
+4. 最后，完成以上操作依然不可以执行校验，因为还需要我们为需要校验的类**开启校验功能**（也就是**添加开启校验注解：@Validated**）
+
+
+
+
+
+#### [知识补充] YAML文件的字面值表达式
+
+在YAML文件中：字面值有着特定的表达式
+
+```yml
+boolean: TRUE                          #TRUE，true，FALSE，fasle，True，False都可以
+float: 3.14							   #6.8523015e+5 支持科学计数法
+int: 123							   #支持二进制、八进制、十六进制（0(0-7)为八进制、0x(0-9 a-f)为十六进制）
+null: ~								   #null用~表示
+string1: HelloWorld                    #字符串可以直接书写
+string2: "Hello\nWorld"				   #有特殊字符的字符串要用双引号包裹（官方推荐字符串都用双引号包裹）
+date: 2002-09-20					   #日期格式必须是yyyy-MM-dd格式
+datetime: 2002-09-20T13:14:52+08:00    #时间和日期之间用 T 连接，+后为时区
+```
+
+
+
+【注】比如数据库连接是输入的密码，假设为纯数字，且为0开头的纯数字。比如为020920，那么会将这个前几位转为八进制，最终导致连接数据库失败。**最简单的解决办法就是将纯数字密码用双引号包裹起来**
+
+
+
+
+
+### 3. 测试🔩
+
+
+
+#### 加载测试专用属性
+
+#### 加载测试专用配置
+
+#### Web环境模拟测试
+
+#### 数据层测试回滚
+
+#### 测试用例数据设定
+
+
+
+
+
+
+
+### 4. 数据层解决方案📑
+
+### 5. 整合第三方技术🌐
+
+### 6. 监控🔍
+
+
 
 
 
