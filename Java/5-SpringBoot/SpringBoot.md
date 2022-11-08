@@ -1339,25 +1339,395 @@ datetime: 2002-09-20T13:14:52+08:00    #时间和日期之间用 T 连接，+后
 
 ### 3. 测试🔩
 
+> 测试时往往需要设置一些专用的测试属性
+>
+> 那么我们需要在测试的类中测试这些专用值，且不影响项目的其他环境
+
 
 
 #### 加载测试专用属性
 
+**@SpringBootTest注解**中，有一个**properties属性**，可以**设置测试环境专用的属性**（可以覆盖掉配置文件中的一些属性）
+
+* 影响范围小，仅对当前测试类有效
+
+**@SpringBootTest注解**中，有一个**args属性**，可以**设置测试环境专用的命令行传入参数**（可以用于模拟命令行传参）
+
+
+
+例如：
+
+```java
+@SpringBootTest(properties = {"test.prop=testValue2"})
+// or @SpringBootTest(args = {"--test.prop=testValue3"})
+class PropertiesAndArgsTest {
+    @Value("${test.prop}")
+    private String msg;
+
+    @Test
+    void testProperties() {
+        System.out.println(msg);
+    }
+
+}
+```
+
+
+
+【注】application.yml < properties属性设置的值 < args属性设置的参数
+
+
+
+
+
 #### 加载测试专用配置
+
+> 加载一些临时的配置在测试中使用
+
+
+
+**@Import注解**可以为当前测试**加载专用配置**
+
+也就是假设**在test文件下（不是main）创建了配置类**，内含一些bean，添加@Bean注解将bean归为Spring管控
+
+然后**用@Import注解将这个配置导入**，即可**让这个配置在这个测试类中使用，且不会影响到其他的测试**（配置类中不需要添加@Configuration注解，添加了这个的话，不需要@Import导入也会让配置生效）
+
+
+
+
 
 #### Web环境模拟测试
 
-#### 数据层测试回滚
+> 要对表现层做测试，那么首先需要在测试时模拟出一个web环境
+
+
+
+**@SpringBootTest注解**中的**webEnvironment属性**，可以设置启用web环境，默认为NONE（也就是不启动web）
+
+* DEFINED_PORT：以定义的端口启动web环境
+* RANDOM_PORT：以随机端口启动web环境
+
+
+
+**有了Web环境之后**，我们才可以进行表现层请求测试：
+
+1. 开启虚拟MVC调用：添加**@AutoConfigureMockMvc注解**
+2. 注入虚拟MVC调用对象：@Autowired **MockMvc** mvc（上个注解提供的调用对象就是MockMvc）
+3. 创建虚拟请求，设置访问路径：用**工具类（MockMvcRequestBuilder）**创建实现类之一的**MockHttpServletRequestBuilder**，然后用具体的get、post、put、delete方法，传入路径即可
+4. 执行请求：调用perform方法，传入调用对象
+
+例如：
+
+```java
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureMockMvc//1.
+public class WebTest {
+    @Test
+    public void testBookController(@Autowired MockMvc mvc//2.) {
+        MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.get("/books");//3.
+        try {
+            mvc.perform(builder);//4.
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+
+
+
+
+如果我们想知道这个请求是否成功，我们需要看他的状态码（比如未找到就是404）或者响应体是否符合预期
+
+我们可以进行**虚拟请求状态匹配**：
+
+1. 定义执行状态匹配器：用**MockMvcResultMatchers工具类**，调用**status**方法，即可获得**StatusResultMatchers**对象（假设为status）
+2. 用这个执行状态匹配器，定义预期的执行状态（成功还是失败）：直接使用**StatusResultMatchers**对象执行对应方法即可，获得一个预期执行结果**ResultMatcher**
+3. 测试执行请求（perform方法），会返回一个真实执行结果**ResultActions**
+4. 用真实执行结果和预期执行结果进行比较，比如比较是否相等（andExpect方法）
+
+例如：
+
+```java
+@Test
+public void testStatus(@Autowired MockMvc mvc) throws Exception {
+    StatusResultMatchers status = MockMvcResultMatchers.status();//1.
+
+    ResultMatcher ok = status.isOk();//2.
+
+    MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.get("/books");
+    ResultActions resultActions = mvc.perform(builder);//3.
+        
+    resultActions.andExpect(ok);//4.
+}
+```
+
+
+
+**虚拟响应体匹配**：
+
+与请求状态匹配大致步骤一样
+
+1. 定义执行结果匹配器：用**MockMvcResultMatchers工具类**，调用**content**方法，即可获得**ContentResultMatchers**对象（假设为content）
+2. 用这个结果匹配器，定义预期的执行结果（内容String是什么）：直接使用**ContentResultMatchers**对象执行对应方法即可，获得一个预期执行结果**ResultMatcher**
+3. 测试执行请求（perform方法），会返回一个真实执行结果**ResultActions**
+4. 用真实执行结果和预期执行结果进行比较，比如比较是否相等（andExpect方法）
+
+例如：
+
+```java
+@Test
+public void testReposeBody(@Autowired MockMvc mvc) throws Exception {
+    ContentResultMatchers content = MockMvcResultMatchers.content();
+
+    ResultMatcher resultMatcher = content.string("Change the World!");//string方法是将响应的内容转为字符串再比较
+
+    MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.get("/books");
+    ResultActions resultActions = mvc.perform(builder);
+
+    resultActions.andExpect(resultMatcher);
+}
+```
+
+
+
+**虚拟响应体JSON匹配**：
+
+也就是将响应体匹配的string方法换为json方法，传入json字符串即可
+
+例如：
+
+```java
+@Test
+public void testJSONResponseBody(@Autowired MockMvc mvc) throws Exception {
+    ContentResultMatchers content = MockMvcResultMatchers.content();
+
+    ResultMatcher resultMatcher = content
+        .json("{\"name\":\"springBoot\",\"type\":\"springBoot\",\"description\":\"springBoot\",\"id\":1}");
+
+    MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.get("/books");
+    ResultActions resultActions = mvc.perform(builder);
+
+    resultActions.andExpect(resultMatcher);
+}
+```
+
+
+
+**虚拟响应头匹配**：
+
+与其他方法异曲同工，换了相应的方法和类而已
+
+```java
+@Test
+public void testResponseHead(@Autowired MockMvc mvc) throws Exception {
+    HeaderResultMatchers header = MockMvcResultMatchers.header();
+
+    ResultMatcher resultMatcher = header.string("Content-Type", "application/json");
+
+    MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.get("/books");
+    ResultActions resultActions = mvc.perform(builder);
+
+    resultActions.andExpect(resultMatcher);
+}
+```
+
+
+
+
+
+#### 业务层测试回滚
+
+> 在打包时，如果没有跳过maven测试，会进行测试环节，去执行业务层和数据层的测试类，也就会造成数据污染
+>
+> 我们希望不用跳过测试环节，且不会造成数据污染
+
+
+
+所以我们需要在业务层测试类上加上注解**@Transactional**：也就是为测试类开启事务，@SpringBootTest注解和这个事务注解一起，就会让SpringBoot检测到你这是在测试业务层，就会将测试用例的事务**进行回滚**，所以不会再污染数据，也就是执行成功了，但没有提交（所以id会被占用）
+
+* 如果希望测试用例的事务提交，那么添加@Rollback注解，这是设置回滚的注解，**@SpringBootTest加@Transactional相当于默认设置了@Rollback(true)**，**需要提交数据的话，那么只需要设置为@Rollback(false)**即可
+
+
+
+
 
 #### 测试用例数据设定
 
+采取随机值进行测试，用SpringBoot提供的随机数（在yml中打出**random**即可）替换固定数据测试
 
+```yaml
+testCase:
+   book:
+   	id1: ${random.int}           #随机整数
+   	id2: ${random.int(10)}	     #10以内整数
+   	type: ${random.int(10,20)}   #10-20以内的随机数
+   	uuid: ${random.uuid}         #随机uuid
+   	name: ${random.value}        #随机字符串，会用MD5加密，看到的是一堆数字
+   	publishTime: ${random.long}  #随机整数（long范围的）
+```
+
+【注】（）为分隔符，[]或者@@或者！！都可以
 
 
 
 
 
 ### 4. 数据层解决方案📑
+
+> 现有的数据层解决方案：
+>
+> Druid+MyBatis(或者MP)+MySQL
+>
+> 数据源：DruidDataSource
+>
+> 持久化技术：MyBatis
+>
+> 数据库：MySQL
+
+
+
+#### SQL
+
+> 依赖关系型数据库解决数据存储
+
+
+
+SpringBoot提供了三种内嵌的数据源对象：
+
+* **HikariCP**（SpringBoot推荐默认使用这个）
+
+  * 默认的数据源配置就是Hikari的配置
+
+    ```yaml
+    spring:
+      datasource:
+          driver-class-name: com.mysql.cj.jdbc.Driver
+          url: jdbc:mysql://localhost:3306/db1?serverTimezone=UTC
+          username: root
+          password: '020920'
+          hikari: #为hikari写专有配置
+            maximum-pool-size: 50
+    ```
+
+    
+
+* Tomcat提供的数据源
+
+* Commons DBCP
+
+
+
+SpringBoot默认内置持久化技术：**JdbcTemplate**
+
+使用的话需要导入依赖：
+
+```xml
+<dependency>
+	<groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-jdbc</artifactId>
+</dependency>
+```
+
+还可以设置JdbcTemplate配置：
+
+```yaml
+spring:
+	jdbc:
+	  template:
+	  	query-timeout: -1  #查询超时时间
+	  	max-rows: 500      #最大行数
+	  	fetch-size: -1     #缓存行数
+```
+
+
+
+SpringBoot提供三种内嵌数据库：（可以在内存运行，小巧，运行速度块，**可以用于测试**）         
+
+* **H2**
+
+  * 导入H2相关坐标依赖：
+
+    ```xml
+    <dependency>
+    	<groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-jpa</artifactId>
+    </dependency>
+    <dependency>
+    	<groupId>com.h2database</groupId>
+        <artifactId>h2</artifactId>
+        <scope>runtime</scope>
+    </dependency>
+    ```
+
+  * 设置web项目，配置H2管理控制台参数
+
+    ```yml
+    spring:
+    	datasource:
+    		driver-class-name: org.h2.Driver   
+    		url: jdbc:h2:~/test
+    		#driver-class-name和url在浏览器访问H2数据库时可以看到，我们需要先将这个配置到数据源中，不然会访问H2数据库失败
+    		#访问用户名默认sa 密码123456
+    		username: sa
+    		password: '123456'
+    	h2:
+    		console:
+    			path: /h2  #在浏览器访问H2数据库的地址
+    			enabled: true  #让H2数据库可以在浏览器访问（仅用于开发阶段，上线则必须设置为false）
+    ```
+
+    
+
+* HSQL
+
+* Derby
+
+【注】SpringBoot可以根据url地址自动识别出数据库驱动类，因此可以省略driver-class-name
+
+
+
+
+
+#### NoSQL
+
+> 不是依赖SQL的数据存储
+>
+> 目前常见的NoSQL解决方案：
+>
+> * **Redis**
+> * **Mongo**
+> * **ES**
+>
+> 这些技术通常在Linux环境下安装部署
+>
+> 这里做简单了解
+
+
+
+**Redis**：
+
+是一款**key-value存储结构的内存级NoSQL数据库**
+
+* 支持多种数据存储格式
+* 支持持久化
+* 支持集群
+
+Redis启动：
+
+* 服务端启动：`redis-server.exe redis.windows.conf`
+* 客户端启动：`redis-cli.exe`
+
+【注】在Windows环境启动会有bug，需要先用客户端shutdown一下然后exit退出，再启动服务端，再启动客户端
+
+
+
+
+
+
+
+
 
 ### 5. 整合第三方技术🌐
 
