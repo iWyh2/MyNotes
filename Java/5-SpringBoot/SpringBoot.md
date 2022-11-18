@@ -683,7 +683,7 @@ taskkill -f -t -im "进程名称"
 
 
 
-### 项目打包-Linux环境
+### 项目打包-Linux环境*
 
 跳过了这一章节（P56）之后学了Linux补充（2022/11/2)
 
@@ -942,7 +942,7 @@ spring:
 		<id>env_dev</id>
 		<!--定义环境中专用自定义属性-->
 		<properties>
-            <!--设置环境变量-->
+            <!--设置环境变量， 标签名称随意-->
             <profiles.active>dev</profiles.active>
 			<jdbc.url>jdbc:mysql:///db1?useServerPrepStmts=true</jdbc.url>
 		</properties>
@@ -1048,7 +1048,7 @@ logging:
 
 使用**Lombok提供的注解**：**@Slf4j** 简化开发，减少日志对象的声明创建操作
 
-将@Slf4j注解添加在需要做日志输出的类上，然后**调用提供的log对象输出日志**即可
+**将@Slf4j注解添加在需要做日志输出的类上**，然后**调用提供的log对象输出日志**即可
 
 
 
@@ -1056,7 +1056,7 @@ logging:
 
 ### 日志输出格式控制
 
-默认的日志格式：时间+级别+PID+所属线程+所属类/接口名+日志信息
+默认的日志格式：**时间+级别+PID+所属线程+所属类/接口名+日志信息**
 
 * PID：进程的ID，用于表明当前操作所处的进程，当多服务同时记录日志时，该值可用于协助程序员调试程序
 * 所属类/接口名：显示的信息为Springboot重写后的信息，名称过长会被简化
@@ -1088,8 +1088,8 @@ logging:
 
 ```yml
 logging:
-	file: #设置日志文件 -server.log  -在当前项目的同级目录下产生
-	  name: server.log
+	file: #设置日志文件 
+	  name: server.log # 在当前项目的同级目录下产生
 	logback:
 		rollingpolicy: #设置日志文件的详细配置 -滚动策略 循环记录日志
 		  max-file-size: 3KB #设置日志的最大大小
@@ -1104,13 +1104,13 @@ logging:
 
 
 
-### 1. 热部署🔧
+## 1. 热部署🔧
 
-> 热部署也就是想更改了项目之后立马就生效，相当于不停服更新
+> 热部署也就是想更改了项目之后立马就生效，相当于"不停服更新"
 
 
 
-#### 手动启动热部署
+### 手动启动热部署
 
 服务器是在SpringBoot里面的一个类了，所以服务器是受SpringBoot管控的，那么我们需要用到SpringBoot提供的工具
 
@@ -1130,9 +1130,9 @@ logging:
 
 
 
-【注】重启（Restart）：重新加载自定义的开发代码（包含类，页面，配置文件）加载位置在restart类加载器
+【注】重启（Restart）：**重新加载自定义的开发代码（包含类，页面，配置文件）**加载位置在**restart类加载器**
 
-【注】重载（ReLoad）：重新加载jar包，加载位置在base类加载器
+【注】重载（ReLoad）：**重新加载jar包**，加载位置在**base类加载器**
 
 【注】**热部署是执行的重启**，**加载开发者自定义资源**，**不加载jar包**
 
@@ -1140,7 +1140,7 @@ logging:
 
 
 
-#### 自动启动热部署
+### 自动启动热部署
 
 > 手动启动依然麻烦，自动最好
 
@@ -1158,7 +1158,7 @@ logging:
 
 
 
-#### 热部署范围配置
+### 热部署范围配置
 
 默认**不触发热部署**的目录列表：
 
@@ -1183,7 +1183,7 @@ devtools:
 
 
 
-#### 关闭热部署
+### 关闭热部署
 
 > 热部署只在开发环境有效
 
@@ -1205,11 +1205,11 @@ devtools:
 
 
 
-### 2. 配置高级🛠
+## 2. 配置高级🛠
 
 
 
-#### @ConfigurationProperties
+### @ConfigurationProperties
 
 > 在YAML文件中，在Java类上添加**@ConfigurationProperties**注解，**指定想封装的部分属性名**（prefix）是什么，好针对性的封装
 >
@@ -1225,7 +1225,7 @@ devtools:
 
 
 
-【注】**@EnableConfigurationProperties注解**：**将添加了@ConfigurationProperties注解的类加入到Spring容器中**，因此添加了@ConfigurationProperties注解的类上面**无需再添加@Component注解将其添加到Spring容器中**（也就是@EnableConfigurationProperties不能与@Component同时使用）
+【注】**@EnableConfigurationProperties注解**：**将添加了@ConfigurationProperties注解的类加入到Spring容器中**，因此添加了@ConfigurationProperties注解的类上面**无需再添加@Component注解将其添加到Spring容器中**（也就是@EnableConfigurationProperties不与@Component同时使用）也就是哪里需要用到有@ConfigurationProperties注解的类的时候，就可以在那里添加这个@EnableConfigurationProperties注解
 
 格式：@EnableConfigurationProperties({类数组})（如：@EnableConfigurationProperties({ServerConfig.class})）
 
@@ -1242,7 +1242,7 @@ devtools:
 
 
 
-#### 宽松绑定/松散绑定
+### 宽松绑定/松散绑定
 
 **@ConfigurationProperties**绑定属性**支持属性名宽松绑定**
 
@@ -1258,7 +1258,7 @@ devtools:
 
 
 
-#### 常用计量单位绑定
+### 常用计量单位绑定
 
 > SpringBoot支持JDK8提供的时间与空间计量单位
 >
@@ -1268,17 +1268,17 @@ devtools:
 
 表示时间范围的类：**Duration**（一般用于表示服务器超时时间）
 
-* **默认单位为秒(s)**，可以在类属性上添加@DurationUnit注解，设置时间的单位（年月日时分秒等）
+* **默认单位为秒(s)**，可以在类属性上**添加@DurationUnit注解**，设置时间的单位（年月日时分秒等）
 
 表示空间大小的类：**DataSize**（一般用于表示存储空间的大小）
 
-* **默认单位为Byte(B)**，可以在类属性上添加@DataSizeUnit注解，设置空间单位（B、KB、GB、TB等）
+* **默认单位为Byte(B)**，可以在类属性上**添加@DataSizeUnit注解**，设置空间单位（B、KB、GB、TB等）
 
 
 
 
 
-#### 数据校验
+### 数据校验
 
 > 开启数据校验有助于系统的安全性
 >
@@ -1299,7 +1299,7 @@ devtools:
 
 2. 为需要校验的字段添加校验注解：比如@Max、@Min等，为校验规则
 
-3. 规范只是校验的大前提，并不是实现，没有实现会报错，所以我们还需要添加校验的实现：Hibernate校验框架
+3. 规范只是校验的大前提，并不是实现，没有实现会报错，所以我们还需要添加校验的实现：**Hibernate校验框架**
 
    ```xml
    <dependency>
@@ -1314,7 +1314,7 @@ devtools:
 
 
 
-#### [知识补充] YAML文件的字面值表达式
+### [知识补充] YAML文件的字面值表达式
 
 在YAML文件中：字面值有着特定的表达式
 
@@ -1337,7 +1337,7 @@ datetime: 2002-09-20T13:14:52+08:00    #时间和日期之间用 T 连接，+后
 
 
 
-### 3. 测试🔩
+## 3. 测试🔩
 
 > 测试时往往需要设置一些专用的测试属性
 >
@@ -1345,13 +1345,13 @@ datetime: 2002-09-20T13:14:52+08:00    #时间和日期之间用 T 连接，+后
 
 
 
-#### 加载测试专用属性
+### 加载测试专用属性
 
 **@SpringBootTest注解**中，有一个**properties属性**，可以**设置测试环境专用的属性**（可以覆盖掉配置文件中的一些属性）
 
-* 影响范围小，仅对当前测试类有效
-
 **@SpringBootTest注解**中，有一个**args属性**，可以**设置测试环境专用的命令行传入参数**（可以用于模拟命令行传参）
+
+* 影响范围小，仅对当前测试类有效
 
 
 
@@ -1380,7 +1380,7 @@ class PropertiesAndArgsTest {
 
 
 
-#### 加载测试专用配置
+### 加载测试专用配置
 
 > 加载一些临时的配置在测试中使用
 
@@ -1396,7 +1396,7 @@ class PropertiesAndArgsTest {
 
 
 
-#### Web环境模拟测试
+### Web环境模拟测试
 
 > 要对表现层做测试，那么首先需要在测试时模拟出一个web环境
 
@@ -1409,7 +1409,7 @@ class PropertiesAndArgsTest {
 
 
 
-**有了Web环境之后**，我们才可以进行表现层请求测试：
+**有了Web环境之后**，我们才可以**进行表现层请求测试**：
 
 1. 开启虚拟MVC调用：添加**@AutoConfigureMockMvc注解**
 2. 注入虚拟MVC调用对象：@Autowired **MockMvc** mvc（上个注解提供的调用对象就是MockMvc）
@@ -1438,7 +1438,7 @@ public class WebTest {
 
 
 
-如果我们想知道这个请求是否成功，我们需要看他的状态码（比如未找到就是404）或者响应体是否符合预期
+如果我们**想知道这个请求是否成功**，我们需要看他的状态码（比如未找到就是404）或者响应体是否符合预期
 
 我们可以进行**虚拟请求状态匹配**：
 
@@ -1537,7 +1537,7 @@ public void testResponseHead(@Autowired MockMvc mvc) throws Exception {
 
 
 
-#### 业务层测试回滚
+### 业务层测试回滚
 
 > 在打包时，如果没有跳过maven测试，会进行测试环节，去执行业务层和数据层的测试类，也就会造成数据污染
 >
@@ -1553,7 +1553,7 @@ public void testResponseHead(@Autowired MockMvc mvc) throws Exception {
 
 
 
-#### 测试用例数据设定
+### 测试用例数据设定
 
 采取随机值进行测试，用SpringBoot提供的随机数（在yml中打出**random**即可）替换固定数据测试
 
@@ -1574,7 +1574,7 @@ testCase:
 
 
 
-### 4. 数据层解决方案📑
+## 4. 数据层解决方案📑
 
 > 现有的数据层解决方案：
 >
@@ -1588,7 +1588,7 @@ testCase:
 
 
 
-#### SQL
+### SQL
 
 > 依赖关系型数据库解决数据存储
 
@@ -1684,13 +1684,13 @@ SpringBoot提供三种内嵌数据库：（可以在内存运行，小巧，运�
 
 * Derby
 
-【注】SpringBoot可以根据url地址自动识别出数据库驱动类，因此可以省略driver-class-name
+【注】SpringBoot可以根据url地址自动识别出数据库驱动类，因此**可以省略driver-class-name**
 
 
 
 
 
-#### NoSQL
+### NoSQL
 
 > 不是依赖SQL的数据存储
 >
@@ -1706,13 +1706,18 @@ SpringBoot提供三种内嵌数据库：（可以在内存运行，小巧，运�
 
 
 
-**Redis**：
 
-是一款**key-value存储结构的内存级NoSQL数据库**
 
-* 支持多种数据存储格式
-* 支持持久化
-* 支持集群
+#### Redis
+
+> * 支持多种数据存储格式
+> * 支持持久化
+> * 支持集群
+>
+
+
+
+[Redis下载](https://github.com/tporadowski/redis/releases)
 
 Redis启动：
 
@@ -1723,15 +1728,904 @@ Redis启动：
 
 
 
+Redis基础操作：
+
+set、get、hset、hget，操作key-value
+
+清空数据库：flushall
+
+
+
+SpringBoot整合Redis：
+
+1. 在创建时**勾选Redis技术**或者导入坐标依赖（导入starter）
+
+   ```xml
+   <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-redis</artifactId>
+   </dependency>
+   ```
+
+2. 配置Redis
+
+   ```yml
+   spring:
+     redis:
+       host: localhost #这是默认的配置，不配也一样
+       port: 6379
+   ```
+
+3. 操作Redis：用Redis提供的**StringRedisTemplate**（自动装配），使用ops*方法（比如opsForValue），获取各种数据类型操作接口，然后用各种set、get等
+
+
+
+【注】RedisTemplate：**以对象作为key和value**，内部对数据进行了序列化
+
+【注】**StringRedisTemplate**：**以字符串作为key和value，与Redis客户端进行的操作一样**，这样对一些数值的操作才不会出现异常（常用）
+
+
+
+切换客户端为Jedis：
+
+1. 导入Jedis依赖：
+
+   ```xml
+   <dependency>
+      <groupId>redis.clients</groupId>
+      <artifactId>jedis</artifactId>
+   </dependency>
+   ```
+
+2. 配置客户端：
+
+   ```yaml
+   spring:
+     redis:
+       host: localhost #这是默认的配置，不配也一样
+       port: 6379
+       client-type: jedis  #默认为lettcus
+   ```
 
 
 
 
 
+#### MongoDB
 
-### 5. 整合第三方技术🌐
+> 开源，高性能，无模式的**文档型数据库**
+>
+> “最像关系型数据库”的**非关系型数据库**
 
-### 6. 监控🔍
+
+
+应用场景：
+
+永久性存储，修改频度极低（比如淘宝用户数据）=> 适合存储在数据库中
+
+永久性存储与临时性存储结合，修改频度较高或极高（比如游戏装备游戏道具数据或者直播打赏粉丝数） => 适合存储在数据库或者MongoDB
+
+**临时存储**，**修改频度飞速**（比如物联网数据） => 适合存储在**MongoDB**
+
+
+
+[MongoDB下载](https://www.mongodb.com/try/download)
+
+MongoDB启动：
+
+* 服务端启动：`mongod --dbpath=..\data\db`
+* 客户端启动：`mongo`
+
+MongoDB可视化客户端：Robo 3T
+
+
+
+MongoDB基础CRUD：（了解）
+
+* 增：
+
+  ```sql
+  //添加数据(文档）
+  //db.book.save({"name": "springboot"})
+  db.book.save({"name":"《Java并发编程思想》",type:"Java"})
+  ```
+
+* 删：
+
+  ```sql
+  //删除数据
+  db.book.remove({name:"springboot"})
+  ```
+
+* 改：
+
+  ```sql
+  //修改数据 --默认只改遇到的第一条数据
+  db.book.update({name:"《Java并发编程思想》"},{$set:{name:"《Java并发编程的艺术》"}})
+  ```
+
+* 查：
+
+  ```sql
+  //查询数据
+  //db.getCollection('book').find({})
+  db.book.find()
+  ```
+
+
+
+SpringBoot整合MongoDB：
+
+1. 创建项目时勾选MongoDB技术，或者导入MongoDB的starter：spring-boot-starter-data-mongodb
+
+2. 配置好客户端，连接哪个数据库
+
+   ```yml
+   spring:
+     data:
+       mongodb:
+         uri: mongodb://localhost/wyh #默认本地与默认端口即可 后面是具体连接哪个数据库
+   ```
+
+3. 自动装配并使用MongoDB提供的连接接口操作MongoDB数据库：**MongoTemplate**，利用这个类进行CRUD即可
+
+
+
+
+
+#### ES
+
+> ES（Elasticsearch）
+>
+> 是一个分布式全文搜索引擎
+>
+> 特点：**倒排索引**(由字段查询到id) 创建文档 使用文档
+
+
+
+[ES下载](https://www/elastic.co/cn/downloads/elasticsearch)
+
+ES启动：**点击运行elasticsearch.bat**文件即可
+
+
+
+ES基础操作：（了解）
+
+* 索引：
+
+* 创建索引：`PUT	http://localhost:9200/books`
+* 查询索引：`GET	http://localhost:9200/books`
+* 删除索引：`DELETE	http://localhost:9200/books`
+
+【注】这样创建的索引是没有规则的，需要我们自己添加**分词器**（[IK分词器下载](https://github.com/medcl/elasticsearch-analysis-ik/releases)）
+
+【注】将下载好的**分词器解压到ES的plugins目录下**，因为这是个插件。然后我们在创建索引的时候需要指定规则（在postman的put请求的body中，以json格式指定）
+
+例如：
+
+```json
+{
+    "mappings":{
+        "properties":{
+            "id":{
+                "type":"keyword"  #以关键字查询
+            },
+            "type":{
+                "type":"keyword"  #以关键字查询
+            },
+            "name":{
+                "type":"text",
+                "analyzer":"ik_max_word",   #添加的分词器
+                "copy_to":"findWithnameAnddes"  #将保存的字段数据复制到指定的属性中去
+            },
+            "description":{
+                "type":"text",
+                "analyzer":"ik_max_word",
+                "copy_to":"findWithnameAnddes"
+            },
+            "findWithnameAnddes":{   #设计型字段，我们想要以name和description字段进行查询，所以用这个保存内容
+                "type":"text",
+                "analyzer":"ik_max_word"
+            }
+        }
+    }
+}
+```
+
+
+
+* 文档：
+
+* 创建文档：
+
+  ```json
+  POST	http://localhost:9200/books/_doc           #使用系统生成的id
+  POST	http://localhost:9200/books/_create/1      #使用指定id
+  POST	http://localhost:9200/books/_doc/1		   #使用指定id，不存在创建，存在则更新
+  并带上json数据
+  
+  例如：
+  {
+      "type":"Java",
+      "name":"《Java编程思想》",
+      "description":"study java"
+  }
+  ```
+
+* 查询文档：
+
+  ```json
+  GET		http://localhost:9200/books/_doc/1         #查询单个文档
+  GET		http://localhost:9200/books/_search        #查询全部文档
+  ```
+
+  * 条件查询：`GET	  http://localhost:9200/books/_search?q=xxxx:xxxx`
+
+* 删除文档：`DELETE    http://localhost:9200/books/_doc/1`
+
+* 修改文档：
+
+  * 全部修改：`PUT    http://localhost:9200/books/_doc/1`	并带上json格式数据
+
+  * 部分修改：`POST	http://localhost:9200/books/_update/1`
+
+    ```json
+    部分修改的JSON格式：比如指定某一字段修改
+    {
+        "doc":{
+            "name":"《Java编程思想》"
+        }
+    }
+    ```
+
+    
+
+SpringBoot整合ES：
+
+1. 勾选ES技术或导入ES依赖
+
+   ```xml
+   <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-elasticsearch</artifactId>
+   </dependency>
+   ```
+
+2. 配置ES
+
+   ```yml
+   spring:
+      elasticsearch:
+        rest:
+          uris: http://localhost:9200
+   ```
+
+3. 创建客户端并使用：ElasticsearchRestTemplate（这是低等级的客户端）（一般不用）
+
+   高等级的客户端还需要我们自己去导入
+
+   ```xml
+   <dependency>
+      <groupId>org.elasticsearch.client</groupId>
+      <artifactId>elasticsearch-rest-high-client</artifactId>
+   </dependency>
+   ```
+
+   创建并**自动注入**：**RestHighLevelClient**，然后执行相应的操作
+
+   例如：
+
+   创建索引
+   
+   ```java
+   @Test
+   void testAutowiredHighClient() throws IOException {
+       CreateIndexRequest request = new CreateIndexRequest("books");//创建 -- 创建索引请求，指定索引名称
+       restHighLevelClient.indices().create(request,RequestOptions.DEFAULT);//调用创建索引操作
+   }
+   ```
+   
+   创建**带分词器的索引**
+   
+   ```java
+   @Test
+   void testCreateIndexByIK() throws IOException {
+       CreateIndexRequest request = new CreateIndexRequest("books");
+       String json = "{\n" +
+               "    \"mappings\":{\n" +
+               "        \"properties\":{\n" +
+               "            \"id\":{\n" +
+               "                \"type\":\"keyword\"\n" +
+               "            },\n" +
+               "            \"type\":{\n" +
+               "                \"type\":\"keyword\"\n" +
+               "            },\n" +
+               "            \"name\":{\n" +
+               "                \"type\":\"text\",\n" +
+               "                \"analyzer\":\"ik_max_word\",\n" +
+               "                \"copy_to\":\"findWithnameAnddes\"\n" +
+               "            },\n" +
+               "            \"description\":{\n" +
+               "                \"type\":\"text\",\n" +
+               "                \"analyzer\":\"ik_max_word\",\n" +
+               "                \"copy_to\":\"findWithnameAnddes\"\n" +
+               "            },\n" +
+               "            \"findWithnameAnddes\":{\n" +
+               "                \"type\":\"text\",\n" +
+               "                \"analyzer\":\"ik_max_word\"\n" +
+               "            }\n" +
+               "        }\n" +
+               "    }\n" +
+               "}";
+      request.source(json, XContentType.JSON);//分词器在json中使用，所以以json传入
+      restHighLevelClient.indices().create(request,RequestOptions.DEFAULT);
+   }
+   ```
+   
+   创建单个文档
+   
+   ```java
+   @Test
+   void testCreateDocument() throws IOException {
+       Book book = bookDao.selectById(1);
+       IndexRequest request = new IndexRequest("books").id(book.getId().toString());
+       request.source(JSON.toJSONString(book), XContentType.JSON);
+       restHighLevelClient.index(request,RequestOptions.DEFAULT);
+   }
+   ```
+   
+   批量创建文档
+   
+   ```java
+   @Test
+   void testCreateAllDocument() throws IOException {
+       List<Book> books = bookDao.selectList(null);
+       BulkRequest bulkRequest = new BulkRequest();//创建批量处理请求
+       for (Book book : books) {
+           IndexRequest request = new IndexRequest("books").id(book.getId().toString());
+           request.source(JSON.toJSONString(book), XContentType.JSON);
+           bulkRequest.add(request);//向批量处理请求里面添加单个文档创建的请求
+       }
+       restHighLevelClient.bulk(bulkRequest,RequestOptions.DEFAULT);//调用批量处理方法
+   }
+   ```
+   
+   按id查询单个文档
+   
+   ```java
+   @Test
+   void testGet() throws IOException {
+       GetRequest request = new GetRequest("books","1");
+       GetResponse response = restHighLevelClient.get(request, RequestOptions.DEFAULT);
+       System.out.println(response.getSourceAsString());
+   }
+   ```
+   
+   按条件查询
+   
+   ```java
+   @Test
+   void testSearch() throws IOException {
+       //条件设置
+       SearchRequest request = new SearchRequest("books");
+       SearchSourceBuilder builder = new SearchSourceBuilder();
+       builder.query(QueryBuilders.matchPhraseQuery("name","Java"));
+       request.source(builder);
+       //传入条件请求 获取响应
+       SearchResponse search = restHighLevelClient.search(request, RequestOptions.DEFAULT);
+       //打印响应
+       SearchHits hits = search.getHits();//是否查询到是Hit中的，也就是是否命中，命中的就是按条件查询到的数据
+       for (SearchHit hit : hits) {
+           String source = hit.getSourceAsString();//想要的数据在Hit的Source中
+           Book book = JSON.parseObject(source, Book.class);
+           System.out.println(book);
+       }
+   }
+   ```
+   
+   
+
+
+
+## 5. 整合第三方技术🌐
+
+
+
+### 缓存
+
+> 缓存（cache）是一种介于数据永久存储介质与数据应用之间的数据临时存储介质
+>
+> 使用缓存可以**有效的减少低速数据读取的过程次数（例如磁盘IO），提高系统性能**
+>
+> 缓存不仅可以用于**提高永久性存储介质的数据读取效率**，还**可以提供临时的数据存储空间**
+>
+> 也就是，从APP <==> DB，变为了 **APP <==> Cache <==> DB**
+
+
+
+SpringBoot提供了默认缓存技术：**Simple**
+
+缓存使用：
+
+* 启用缓存
+
+  * **导入缓存的starter**
+
+    ```xml
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-cache</artifactId>
+    </dependency>
+    ```
+
+  * **在引导类上使用@EnableCaching注解，开启缓存功能**，或者在某个配置类上使用，然后加载入SpringBoot项目
+
+* 设置进入缓存的数据
+
+* 设置读取缓存的数据
+
+  * 设置当前操作的结果数据进入缓存，**使用@Cacheable注解**，value属性是自定义缓存名，key是想拿缓存数据的"钥匙"索引
+
+    例如：
+
+    ```java
+    @Override
+    @Cacheable(value = "cacheSpace", key = "#id")//查询时会先走缓存
+    public Books selectById(Integer id) {
+       return bookDao.selectById(id);
+    }
+    ```
+    
+  * **@Cacheable注解**：是**向缓存中存值或者取值**，每次取的必然是之前已经向缓存中存的
+  
+  * **@CachePut注解**：格式与@Cacheable一致，功能是**只向缓存中存值**，无法取值
+
+【注】特别注意，在一个类中，**@CachePut注解向缓存中存值**之后，需要我们**用一个独立的方法将缓存中的值取出来**，因为**@Cacheable注解的取值机制是将缓存内的值作为方法的返回值返回**。然后我们去**调用这个独立的方法得到缓存内的值**。更要**特别注意的是**：如果这个**取缓存值的独立方法**与**调用它的方法**在**同一个类中**，这**属于是类的内部调用，这个方法没有经过Spring容器的管理，没有注入缓存功能，无法实现取出缓存值**，哪怕这个类上有@Service之类的容器Bean注解也不行，因为这个方法始终是类的内部调用，没有被Spring容器管理。解决方法就是**将取缓存值的独立方法放到另一个Bean之中就可以了**，调用这个Bean的方法，就会经过Spring容器管理，然后给它注入缓存功能
+
+
+
+SpringBoot除了提供默认的缓存技术，还可以对其他的缓存技术进行整合（**统一接口**，方便缓存技术的开发与管理，更改了技术但是代码不变）
+
+常用如下：
+
+* Simple（默认的）
+* Ehcache
+* **Redis**
+* **memcached**（未整合，代码会变）
+
+
+
+#### Ehcache
+
+使用Ehcache技术：
+
+1. 需要导入依赖
+
+   ```xml
+   <dependency>
+       <groupId>net.sf.ehcache</groupId>
+       <artifactId>ehcache</artifactId>
+   </dependency>
+   ```
+
+2. 创建Ehcache的配置文件，配置好所需配置（ehcache.xml）
+
+   ```xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   <ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:noNamespaceSchemaLocation="http://ehcache.org/ehcache.xsd"
+            updateCheck="false">
+       <!--
+          diskStore：为缓存路径，ehcache分为内存和磁盘两级，此属性定义磁盘的缓存位置。参数解释如下：
+          user.home – 用户主目录
+          user.dir – 用户当前工作目录
+          java.io.tmpdir – 默认临时文件路径
+        -->
+       <diskStore path="D:\Ehcache"/>
+   
+       <defaultCache
+               eternal="false"
+               diskPersistent="false"
+               maxElementsInMemory="1000"
+               overflowToDisk="false"
+               timeToIdleSeconds="60"
+               timeToLiveSeconds="60"
+               memoryStoreEvictionPolicy="LRU"/>
+   
+       <cache
+               name="smsCode"    <!--程序中某处使用的缓存名，需要在这里设置-->
+               eternal="false"
+               diskPersistent="false"
+               maxElementsInMemory="1000"
+               overflowToDisk="false"
+               timeToIdleSeconds="60"
+               timeToLiveSeconds="60"
+               memoryStoreEvictionPolicy="LRU"/>
+       <!--
+          defaultCache：默认缓存策略，当ehcache找不到定义的缓存时，则使用这个缓存策略。只能定义一个。
+        -->
+       <!--
+         name:缓存名称。
+         maxElementsInMemory:缓存最大数目
+         maxElementsOnDisk：硬盘最大缓存个数。
+         eternal:对象是否永久有效，设置为true则不会被清除，一但设置了，timeout将不起作用。通常设置为false
+         overflowToDisk:超过最大缓存数时，是否保存到磁盘
+         timeToIdleSeconds:设置对象在失效前的允许闲置时间（单位：秒）。仅当eternal=false对象不是永久有效时使用，可选属性，默认值是0，也就是最大不活动间隔。
+         timeToLiveSeconds:设置对象在失效前允许存活时间（单位：秒）。最大时间介于创建时间和失效时间之间。仅当eternal=false对象不是永久有效时使用，默认是0.，也就是对象存活时间无穷大。
+         diskPersistent：是否缓存虚拟机重启期数据 Whether the disk store persists between restarts of the Virtual Machine. The default value is false.
+         diskSpoolBufferSizeMB：这个参数设置DiskStore（磁盘缓存）的缓存区大小。默认是30MB。每个Cache都应该有自己的一个缓冲区。
+         diskExpiryThreadIntervalSeconds：磁盘失效线程运行时间间隔，默认是120秒。
+         memoryStoreEvictionPolicy：缓存清除策略，当达到maxElementsInMemory限制时，Ehcache将会根据指定的策略去清理内存。默认策略是LRU（最近最少使用）。你可以设置为FIFO（先进先出）或是LFU（较少使用）。
+         clearOnFlush：内存数量最大时是否清除。
+         memoryStoreEvictionPolicy:可选策略有：LRU（最近最少使用，默认策略）、FIFO（先进先出）、LFU（最少访问次数）。
+         FIFO，first in first out，这个是大家最熟的，先进先出。
+         LFU， Less Frequently Used，就是上面例子中使用的策略，直白一点就是讲一直以来最少被使用的。如上面所讲，缓存的元素有一个hit属性，hit值最小的将会被清出缓存。
+         LRU，Least Recently Used，最近最少使用的，缓存的元素有一个时间戳，当缓存容量满了，而又需要腾出地方来缓存新的元素的时候，那么现有缓存元素中时间戳离当前时间最远的元素将被清出缓存。
+      -->
+   </ehcache>
+   ```
+
+3. 更改配置，使用Ehcache
+
+   ```yml
+   spring:
+     cache:
+       type: ehcache
+       ehcache:
+         config: ehcache.xml #指定Ehcache的配置文件是哪个，一般是防止Ehcache的配置文件不叫ehcache.xml
+   ```
+
+【注】**Ehcache技术需要@Cacheable注解内设置的缓存空间名在Ehcache的配置文件中提前设置好**
+
+
+
+
+
+#### [知识补充] 数据淘汰策略
+
+LRU：Least Recently Used 最近最少使用的淘汰，也就是淘汰掉最近不活跃的数据
+
+LFU：Least Frequently Used 最近使用次数最少的淘汰
+
+TTL：将将要过期的淘汰掉
+
+RANDOM：任意选择淘汰掉
+
+
+
+
+
+#### Redis
+
+使用Redis缓存技术：
+
+1. 导入Redis依赖
+
+2. 配置Redis
+
+   ```yml
+   spring:
+     redis:
+       host: localhost
+       port: 6379                  #这里是先配置好Redis服务器，才可以使用Redis的缓存
+     cache:
+       type: redis                 #指定使用Redis缓存
+       redis:                      #配置Redis缓存
+         time-to-live: 10s         #最大存活时间
+         key-prefix: wyh_          #指定key前缀
+         use-key-prefix: false     #是否使用前缀 -- 不使用就只用value没有key
+         cache-null-values: false  #是否缓存空值
+   ```
+
+
+
+
+
+#### memcached
+
+[memcached下载](https://www.runoob.com/memcacahed/window-install-memcached.html)
+
+mamcached使用：cmd窗口
+
+* memcached.exe -d install：安装
+* memcached.exe -d start：启动服务
+* memcached.exe -d stop：停止服务
+
+
+
+**SpringBoot并没有对memcached进行整合**，**需要使用硬编码**实现对客户端的初始化管理
+
+memcached客户端选择：
+
+* Memcached Client for Java：最早期客户端，稳定可靠，用户群广
+* SpyMemcached：效率相较于上一个高
+* **Xmemcached**：在上一个的基础上多了并发处理（这个最好）
+
+
+
+memcached使用：
+
+1. 导入Xmemcached坐标：
+
+   ```xml
+   <!-- https://mvnrepository.com/artifact/com.googlecode.xmemcached/xmemcached -->
+   <dependency>
+       <groupId>com.googlecode.xmemcached</groupId>
+       <artifactId>xmemcached</artifactId>
+       <version>2.4.7</version>
+   </dependency>
+   ```
+
+2. 配置memcached服务器的一些属性：这是可以直接写在代码里的，单位了安全性和美观性，我们选择将这些配置加在配置文件中，为自定义属性
+
+   ```yml
+   #Xmemcached的一些属性配置
+   memcached:
+     servers: localhost:11211 #服务器地址
+     poolSize: 10             #连接池数量
+     opTimeout: 3000          #默认超时时间
+   ```
+
+3. 创建读取配置信息的属性类，加载刚刚配置好的属性：
+
+   ```java
+   @ConfigurationProperties(prefix = "memcached")
+   @Data
+   public class XmemcachedProperties {
+       private String servers;
+       private int poolSize;
+       private long opTimeout;
+   }
+   ```
+
+4. 创建memcached客户端配置类：因为SpringBoot没有整合，所以需要我们把Xmemcached加入到Spring容器里面
+
+   ```java
+   @Configuration
+   @EnableConfigurationProperties({XmemcachedProperties.class})
+   public class XmemcachedConfig {
+       @Autowired
+       XmemcachedProperties xmemcachedProperties;
+   
+       @Bean
+       public MemcachedClient memcachedClient() throws IOException {
+           MemcachedClientBuilder memcachedClientBuilder = new XMemcachedClientBuilder(xmemcachedProperties.getServers());
+           memcachedClientBuilder.setConnectionPoolSize(xmemcachedProperties.getPoolSize());
+           memcachedClientBuilder.setOpTimeout(xmemcachedProperties.getOpTimeout());
+           return memcachedClientBuilder.build();
+       }
+   }
+   ```
+
+5. 使用memcached客户端类，使用set存入缓存，get取缓存值
+
+   * set方法的三个参数：第一个参数为作为key的值，第二个参数为过时时间（0为永不过时），第三个参数为key对应的value
+   * get方法的参数为key
+
+
+
+
+
+#### jetcache
+
+> 这是由阿里巴巴创建的一门缓存技术
+>
+> 是对SpringCache进行了封装，在原有的功能上，实现了：
+>
+> * 多级缓存
+> * 缓存统计
+> * 自动刷新
+> * 异步调用
+> * 数据报表
+
+
+
+jetcache设定了**本地缓存和远程缓存**的多级缓存解决方案（本地缓存访问速度快，远程缓存解决容量问题）
+
+jetcache支持的四种：
+
+* 本地缓存：
+  * **LinkedHashMap**
+  * Caffeine
+* 远程缓存
+  * **Redis**
+  * Tair
+
+
+
+使用jetcache：
+
+1. 导入jetcache坐标依赖：
+
+   ```xml
+   <dependency>
+       <groupId>com.alicp.jetcache</groupId>
+       <artifactId>jetcache-starter-redis</artifactId>
+       <version>2.6.0</version>
+   </dependency>
+   ```
+
+2. **配置远程缓存或者本地缓存**的必要配置属性：
+
+   ```yml
+   jetcache:
+     statIntervalMinutes: 15      #设置缓存统计报告，十五分钟后查看
+     areaInCacheName: false       #是否将@CreatCache注解的area属性的值加入到缓存名中
+     local:			  #本地缓存
+       default: 		  #默认配置 设置为default可以省去指定@CreatCache注解的area的属性
+         type: linkedhashmap       #指定本地缓存类型为LinkedHashMap
+         keyConvertor: fastjson    #key值的转换器 因为如果key为对象，需要转为String
+         limit: 100      #最大缓存数量
+     remote:             #远程缓存
+       default:          #默认配置 设置为default可以省去指定@CreatCache注解的area的属性
+         type: redis     #类型
+         host: localhost
+         port: 6379
+         keyConvertor: fastjson
+         valueEncoder: java       #value的编码类型
+         valueDecoder: java	   #value的解码类型
+         poolConfig:     #必须要有的配置
+           maxTotal: 50  #最大连接数
+           maxIdle: 20
+           minIdle: 5
+       sms:              #两种缓存除了设置default，还可以自定义配置名，那么需要指定@CreatCache注解的area的属性值为这个
+         type: redis     #类型
+         host: localhost
+         port: 6379
+         poolConfig:     #必须要有的配置
+           maxTotal: 50
+   ```
+
+3. 开启jetcache缓存功能：在启动类上添加**@EnableCreateCacheAnnotation注解**，提供**注解开启缓存功能**
+
+4. 声明缓存对象，并添加**@CreatCache注解**
+
+   ```java
+   @CreateCache(name = "jetcache_",expire = 3600,cacheType = CacheType.LOCAL)//必须填两个参数：自定义缓存名和过时时间，单位默认为秒。可以自己设置单位：用第三个参数timeUnit；cacheType为指定缓存类型为本地还是远程还是都是；area为指定配置属性名为哪个；
+   private Cache<String,String> jetcache;
+   ```
+
+5. 操作缓存：使用缓存对象，调用put注入缓存，get取缓存值
+
+
+
+方法缓存：直接在方法上开启缓存功能，可以通过方法注入或取出缓存值
+
+1. 启用方法缓存：在启动类上使用**@EnableMethodCache注解**，**属性值为指定要开启方法缓存的包是哪个**，或者覆盖到这个包
+
+   ```java
+   @EnableCreateCacheAnnotation//开启jetcache缓存
+   @EnableMethodCache(basePackages = {"com.wyh"})//开启方法注解
+   ```
+
+2. 使用方法注解操作缓存
+
+   ```java
+   @Cached(name = "book_",key = "#id",expire = 3600,cacheType = CacheType.REMOTE)//读取缓存，没有就注入
+   @CacheRefresh(refresh = 10)//缓存刷新（十秒刷新一次，防止更新了数据但是缓存还没有更新
+   public Books selectById(Integer id) {
+       return bookDao.selectById(id);
+   }
+   
+   @CacheInvalidate(name = "book_",key = "#id")//缓存删除
+   public Boolean delete(Integer id) {
+       return bookDao.deleteById(id) > 0;
+   }
+   
+   @CacheUpdate(name = "book_",key = "#books.id",value = "#books")//缓存更新
+   public Boolean update(Books books) {
+       return bookDao.updateById(books) > 0;
+   }
+   ```
+
+3. **操作缓存的前提是缓存对象是可序列化的**，所以我们需要在缓存对象上**实现Serializable接口**
+
+   ```java
+   @Data
+   public class Books implements Serializable {
+       private Integer id;
+       private String name;
+       private String type;
+       private String description;
+   }
+   ```
+
+   同时在jetcache配置上我们还需要设定key转换器和value转换类型（在远程缓存时，redis只能操作字符串）
+
+   ```yml
+   keyConvertor: fastjson   #key值的转换器 因为如果key为对象，需要转为String
+   valueEncoder: java       #value的编码类型
+   valueDecoder: java	     #value的解码类型
+   ```
+
+
+
+
+
+#### j2cache
+
+> 是一个缓存整合框架，自身不提供缓存功能
+>
+> 提供的是缓存的整合方案，使各种缓存搭配使用
+
+
+
+整合ehcache + redis：
+
+1. 加入j2cache和Ehcache的坐标依赖：
+
+   ```xml
+   <dependency>
+       <groupId>net.oschina.j2cache</groupId>
+       <artifactId>j2cache-core</artifactId>
+       <version>2.8.4-release</version>
+   </dependency>
+   
+   <!--内涵redis的包 所以不需要再导redis的依赖-->
+   <dependency>
+       <groupId>net.oschina.j2cache</groupId>
+       <artifactId>j2cache-spring-boot2-starter</artifactId>
+       <version>2.8.0-release</version>
+   </dependency>
+   
+   <dependency>
+       <groupId>net.sf.ehcache</groupId>
+       <artifactId>ehcache</artifactId>
+   </dependency>
+   ```
+
+2. 在application.yml中配置使用j2cache，指定j2cache的配置文件（文件名可以更改）
+
+   ```yml
+   j2cache:
+     config-location: j2cache.properties
+   ```
+
+3. 在j2cache配置文件中配置一级缓存与二级缓存以及一级缓存数据到二级缓存的发送方式
+
+   ```properties
+   #j2cache最简单基础版
+   
+   #一级缓存
+   j2cache.L1.provider_class = ehcache
+   ehcache.configXml = ehcache.xml
+   
+   #设置是否启用二级缓存
+   j2cache.l2-cache-open = true
+   
+   #二级缓存
+   j2cache.L2.provider_class = net.oschina.j2cache.cache.support.redis.SpringRedisProvider
+   #这里叫redis后面的属性才可以叫redis，这里是自定义的
+   j2cache.L2.config_section = redis
+   redis.hosts = localhost:6379
+   
+   #一级缓存的数据到达二级缓存  -- 广播模式：消息的发布与订阅
+   j2cache.broadcast = net.oschina.j2cache.cache.support.redis.SpringRedisPubSubPolicy
+   
+   #设置redis的单级服务器
+   redis.mode = single
+   
+   #缓存的前缀名
+   redis.namespace = j2cache
+   ```
+
+4. 设置使用缓存对象：**CacheChannel**（由Spring注入）
+
+5. 调用缓存操作：set设置缓存/get获取缓存值
+
+   例如：cacheChannel.set("sms",tele,code);/cacheChannel.get("sms",smsCode.getTele());
+
+
+
+
+
+### 任务
+
+### 邮件
+
+### 消息
+
+## 6. 监控🔍
 
 
 
