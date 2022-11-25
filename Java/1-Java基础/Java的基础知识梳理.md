@@ -1,4 +1,4 @@
-# Java的基础知识梳理
+# ☕Java的基础知识梳理
 
 > JavaSE的内容梳理 📖
 
@@ -1127,11 +1127,30 @@ Java的**数组工具类：Arrays**
         
         用键值对来保存数据，键值对不能为null
         
-        常用API与Map一致
+        **一般不当做集合试用**
         
-        Properties用于从xxx.properties文件加载数据到Properties类对象中，进行读取和修改
+        **常用API与Map一致**
+        
+        Properties一般代表一个属性文件，可以**将自己对象中的键值对信息存入到一个属性文件中去**（属性文件：.properties文件，内容为key=value，一般用于做系统配置信息）
+        
+        Properties也可以**用于从xxx.properties文件加载数据到Properties类对象中，进行读取和修改**
         
         也就是说，Properties是**从properties配置文件中读取数据的中间桥梁**
+        
+        ```java
+        //Properties和IO流结合的方法
+        
+        void load(InputStream inStream);//从字节输入流代表的properties文件中读取属性
+        void load(Reader reader);//从字符输入流代表的properties文件中读取属性
+        
+        //第一个参数为具体连接的管道，指定哪个properties文件。第二个参数为注释（comments），可以设置为空字符串
+        void store(OutputStream out,String comments);//将该调用的Properties对象里的属性写入到指定的properties文件中
+        void store(Writer writer,String comments);//将该调用的Properties对象里的属性写入到指定的properties文件中
+        
+        public Object setProperty(String key,String value);//保存键值对
+        public String getProperty(String key);//用指定的键搜索value值
+        public Set<String> stringPropertyNames();//获取所有键的名称集合
+        ```
         
         
     
@@ -1732,7 +1751,7 @@ output- 输出、写
 
 IO流体系：
 
-* 字节流
+* **字节流**
 
   * **InputStream**：字节输入流（抽象类）
 
@@ -1792,7 +1811,7 @@ IO流体系：
       ```
       
     
-  * 文件拷贝实现：字节输入流和字节输出流可以操作一切文件，适合文件拷贝。拷贝前后编码要一致
+  * 文件拷贝实现：**字节输入流和字节输出流可以操作一切文件，适合文件拷贝。拷贝前后编码要一致**
 
     ```java
     public void FileCopy(String SourceFile, String Des) {
@@ -1822,7 +1841,7 @@ IO流体系：
 
     * try-catch-finally：在异常处理时提供finally块执行必要操作，比如IO流的资源释放
 
-      特点：**finally内的语句一定会执行**，除非JVM退出，且都有return语句的话，try或catch内的return会将返回值临时存储到一个内存区内，然后**finally的return的返回值会覆盖掉这个临时return值并返回**
+      特点：**finally内的语句一定会执行**，除非JVM退出，且都有return语句的话，**try或catch内的return会将返回值临时存储到一个内存区内**，然后**finally的return的返回值会覆盖掉这个临时return值并返回**
 
       格式：**try{}catch{}finally{}**
 
@@ -1836,9 +1855,10 @@ IO流体系：
 
 
 
-* 字符流：按字符读取，更适合读取中文、文本
+* **字符流**：按字符读取，更**适合读取中文、文本**
 
   * **Reader**：字符输入流（抽象类）
+    
     * **FileReader**：文件字符输入流
     
       作用：将文件数据以字符的形式读取到内存
@@ -1887,9 +1907,205 @@ IO流体系：
       close();//关闭流，释放资源，在关闭之前会先自动刷新流，关闭后不可以再写数据
       ```
     
+
+
+
+
+
+* 缓冲流：也叫高效流、高级流（字节流也叫原始流）自带缓冲区，**提高原始字节流和原始字符流读写的性能**，也是IO流体系的
+
+  * 字节缓冲流：分别**继承于InputStream和OutputStream，功能用法是一样的**，**自带8KB缓冲区**
+
+  * **BufferedInputStream**：字节缓冲输入流
+
+  * **BufferedOutputStream**：字节缓冲输出流
+
+    * 构造方法：
+
+      ```java
+      public BufferedInputStream(InputStream is);//将低级的字节输入流包装为一个高级的字节缓冲输入流管道，提高读性能
+      public BufferedOutputStream(OutputStream os);//将低级的字节输出流包装为一个高级的字节缓冲输出流管道，提高写性能
+      ```
+
       
 
+  * 字符缓冲流：分别继承于Reader和Writer，基本用法是一样的，但是多了各自独有功能
+
+  * **BufferedReader**：字符缓冲输入流
+
+    ```java
+    //构造方法
+    public BufferedReader(Reader r);//将低级的字符输入流包装为一个高级的缓冲字符输入流管道，提高字符输入流读数据的性能
+    
+    //除了基本方法之外独有的功能
+    public String readLine();//读取一行数据返回，如果读取没有完毕，或者无行可读时，返回null
+    ```
+
+    
+
+  * **BufferedWriter**：字符缓冲输出流
+
+    ```java
+    //构造方法
+    public BufferedWriter(Writer w);//将低级的字符输出流包装为一个高级的缓冲字符输出流管道，提高字符输出流的写数据性能
+    
+    //除了基本方法之外独有的功能
+    public void newLine();//换行操作，也就是在文件里面写入一个换行符
+    ```
+
+
+
+问题引出：**不同编码下读取乱码的问题**：字符流读取文本内容时，**必须文件和代码编码一致才不会乱码**
+
+解决方法：将原始的字节流提取出来，然后将原始的字节流转换为指定字符的字符流
+
+[注] Windows系统下的ANSI就是GBK
+
+* **转换流**：**属于字符流**，也叫字符输入输出转换流。将字节流转为字符流
+
+  * **InputStreamReader**：字符输入转换流，**控制读取字符的编码**
+
+    ```java
+    //构造方法
+    public InputStreamReader(InputStream in);//将原始的字节输入流按照 默认编码 转换为字符输入流，也就是转换为默认的FileReader，一般不用这个
+    public InputStreamReader(InputStream in,String charset);//将原始的字节输入流按照 指定编码 转换为字符输入流，可以解决乱码问题，常用
+    ```
+
+    
+
+  * **OutputStreamWriter**：字符输出转换流，**控制写出去的字符的编码**
+
+    ```java
+    //构造方法
+    public OutputStreamReader(OutputStream out);//将原始的字节输出流按照 默认编码 转换为字符输出流，也就是转换为默认的FileWriter，一般不用
+    public OutputStreamReader(OutputStream out,String charset);//将原始的字节输出流按照 指定编码 转换为字符输出流，可以解决乱码问题，常用
+    ```
+
+
+
+* **对象字节输入输出流：用于对象的序列化和反序列化**
+
+  * **ObjectOutputStream**
+
+    ```java
+    //构造方法
+    public ObjectOutputStream(OutputStream out);//将低级的字节输出流包装为高级的对象字节输出流，低级的字节输出流要指定写出到的文件地址
+    
+    //独有方法
+    public final void writeObject(Object object);//将对象写到流代表的文件中去
+    ```
+
+  * **ObjectInputStream**
+
+    ```java
+    //构造方法
+    public ObjectInputStream(InputStream in);//将低级的字节输入流包装为高级的对象字节输入流，低级字节输入流要指定对象数据文件的地址
+    
+    //独有方法
+    public Object readObject();//将存储到文件中的对象数据恢复为内存中的对象返回
+    ```
+
+
+
+* **打印流**：方便**高效的打印数据到文件中，可以做到打印什么就是什么**（也就是写数据到文件的流）一般指PrintStream和PrintWriter
+
+  * PrintStream：属于OutputStream（字节输出流），内部有缓冲流
+
+    ```java
+    //构造方法
+    public PrintStream(OutputStream os);//将低级字节输出流包装为高级的打印流，还可以指定编码格式，要追加数据那么需要在低级流中先开启追加
+    public PrintStream(File f);//打印流直接通向文件对象代表的文件
+    public PrintStream(String filepath);//打印流直接通向文件路径代表的文件
+    
+    //调用方法
+    public void print(Xxx xx);//打印任意类型的数据到文件中
+    public void println(Xxx xx);
+    
+    //写数据的流 - 所以需要关闭流和刷新流
+    ```
+
+    
+
+  * PrintWriter：属于Writer，字符输出流
+
+    ```java
+    //构造方法
+    public PrintWriter(Writer w);//将低级的字符输出流包装为打印流
+    public PrintWriter(OutputStream os);//将低级字节输出流包装为高级的打印流，还可以指定编码格式，要追加数据那么需要在低级流中先开启追加
+    public PrintWriter(File f);//打印流直接通向文件对象代表的文件
+    public PrintWriter(String filepath);//打印流直接通向文件路径代表的文件
+    
+    //调用方法
+    public void print(Xxx xx);//打印任意类型的数据到文件中
+    public void println(Xxx xx);
+    
+    //写数据的流 - 所以需要关闭流和刷新流 也可以开启自动刷新功能 -> 在构造方法上加上true即可
+    ```
+
+  * PrintWriter和PrintStream的区别：
+
+    * 打印功能一模一样，无区别
+    * 具体区别在于写数据上，PrintWriter可以写字符，PrintStream可以写字节
+
+  * 应用：改变输出语句的位置，输出重定向
+
+    ```java
+    PrintStream ps = new PrintStream("文件位置");//首先我们定义好重定向后的打印位置
+    System.setOut(ps);//调用System的setOut方法重新设置打印流
+    System.out.println("xxxx");//此时再调用这个方法时，打印的东西就不在控制台上了，在定义的文件位置中
+    ```
+
+
+
+**IO框架：commons-io**，apache组织的开源项目，主要是**FileUtils**和**IOUtils**两个类
+
+* 内置已经实现的方法，比如复制文件等
+
+  ```java
+  //FileUtils的主要方法：
+  String readFileToString(File file,String encoding);//读取文件中的数据返回字符串
+  void copyFile(File srcFile,File destFile);//复制文件
+  void copyDirectoryToDirectory(File secDir,File destDir);//复制文件夹
+  ```
+
+  
+
+
+
+## 31. Java的序列化
+
+序列化 - **Serializable**
+
+
+
+**对象序列化**：以内存为基准，**将内存中的对象存储到磁盘文件中去**
+
+* 需要**使用对象字节输出流：ObjectOutputStream**
+* 同时**对象需要实现Serializable接口**
+
+
+
+**对象反序列化**：以内存为基准，**将存储到文件中的对象数据恢复成内存中的对象**
+
+* 需要**使用对象字节输入流：ObjectInputStream**
+
+
+
+不想对象中的某个字段被序列化到文件，比如密码，那么可以在字段前加上**transient**关键字
+
+```java
+private transient String password;
+```
+
+
+
+序列化版本号：为一个自定义的对象字段，意为这个对象的版本号
+
+* 作用：防止在类作了更新之后，比如增加了字段，再反序列化之前的对象数据会报错（因为已经缺少了字段了）
+* 那么序列化和反序列化时的序列化版本号要一致
 
 
 
 
+
+## 32. Java的多线程

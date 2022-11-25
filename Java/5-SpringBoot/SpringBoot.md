@@ -922,7 +922,7 @@ server:
 ```yml
 spring:
 	profiles:
-	  active: @profile.active@ #引用maven中设置的环境变量（用@..@占位符）
+	  active: @profile.active@ #引用maven的pom文件中设置的环境变量（用@..@占位符）
 ```
 
 
@@ -2184,7 +2184,7 @@ SpringBoot提供了默认缓存技术：**Simple**
 
 
 
-SpringBoot除了提供默认的缓存技术，还可以对其他的缓存技术进行整合（**统一接口**，方便缓存技术的开发与管理，更改了技术但是代码不变）
+SpringBoot除了提供默认的缓存技术，还可以对其他的缓存技术进行整合（**统一接口**，方便缓存技术的开发与管理，**更改了技术但是代码不变**）
 
 常用如下：
 
@@ -2356,7 +2356,7 @@ memcached使用：
    </dependency>
    ```
 
-2. 配置memcached服务器的一些属性：这是可以直接写在代码里的，单位了安全性和美观性，我们选择将这些配置加在配置文件中，为自定义属性
+2. 配置memcached服务器的一些属性：这是可以直接写在代码里的，但为了安全性和美观性，我们选择将这些配置加在配置文件中，为自定义属性
 
    ```yml
    #Xmemcached的一些属性配置
@@ -2621,11 +2621,1036 @@ jetcache支持的四种：
 
 ### 任务
 
+> 定时任务是企业级应用的常见操作
+>
+> 比如：
+>
+> * 年度报表
+> * 缓存统计报告
+
+
+
+流行的定时任务技术：
+
+* Quartz
+* **Spring Task**
+
+
+
+#### Quartz
+
+SpringBoot整合Quartz：
+
+相关概念：
+
+* 工作（Job）：用于定义具体执行的工作
+* 工作明细（JobDetail）：用于描述定时工作相关的信息
+* 触发器（Trigger）：用于描述触发工作的规则，通常使用cron表达式定义调度规则
+* 调度器（Scheduler）：描述了工作明细与触发器的对应关系
+
+
+
+1. 导入Quartz依赖坐标
+
+   ```xml
+   <dependency>
+       <groupId>org.springframework.boot</groupId>
+       <artifactId>spring-boot-starter-quartz</artifactId>
+   </dependency>
+   ```
+
+2. 定义具体要执行的任务（Job），无需设置为bean，只需**要继承QuartzJobBean**
+
+   例如：
+
+   ```java
+   public class MyQuartz extends QuartzJobBean {
+       @Override
+       protected void executeInternal(JobExecutionContext jobExecutionContext) throws JobExecutionException { //这个方法类似于TimerTask的run方法 相当于一个多线程
+           System.out.println("quartz is run");
+       }
+   }
+   ```
+
+3. 定义工作明细（JobDetail）和触发器（Trigger），并绑定对应关系
+
+   例如：
+
+   ```java
+   @Configuration
+   public class QuartzConfig {
+       @Bean
+       public JobDetail jobDetail() {
+           return JobBuilder
+               .newJob(MyQuartz.class)//绑定具体工作Job是什么，指定类
+               .storeDurably()//是否持久化，必须要有，不然无法一直执行
+               .build();
+       }
+   
+       @Bean
+       public Trigger jobTrigger() {
+           ScheduleBuilder<? extends Trigger> scheduleBuilder = CronScheduleBuilder
+               .cronSchedule("0/1 * * * * ?");//cron表达式，这里是：不限星期 任意月 任意日 任意时 任意分 0秒开始每1秒进行（倒序的，?为不限）
+           return TriggerBuilder.newTrigger()
+               .forJob(jobDetail())//绑定工作明细
+               .withSchedule(scheduleBuilder)//指定时间周期 （调度器）
+               .build();
+       }
+   }
+   ```
+
+
+
+
+#### SpringTask
+
+使用**Spring Task**：
+
+1. 开启定时任务功能：在启动类上加上**@EnableScheduling注解**
+
+2. 设置要定时执行的具体任务方法，并制定周期：
+
+   例如：
+
+   ```java
+   @Component
+   public class Task {
+       @Scheduled(cron = "0/1 * * * * ?")//指定具体周期 为cron表达式
+       public void task() { //要定时执行的具体任务 这个任务方法要在Bean里面，归Spring管理
+           System.out.println("SpringTask is run");
+       }
+   }
+   ```
+
+3. 还可以配置定时任务的相关配置，可以配也可以不配
+
+   ```yml
+   spring:
+     task:
+     	scheduling:
+     		pool:
+     		  size: 1  						     #任务调度线程池大小 默认为1
+           thread-name-prefix: wyh_task_        #调度线程名称的前缀 默认为scheduling_
+           shutdown:
+           	await-termination: false		 #线程池关闭时是否等待所有任务完成
+           	await-termination-period: 10s    #调度线程关闭前最大等待时间，确保最后一定关闭
+   ```
+
+   
+
+
+
 ### 邮件
+
+相关概念：
+
+* SMTP：Simple Mail Transfer Protocol 简单邮件传输协议，用于发送电子邮件的传输协议
+* POP3：Post Office Protocol - Version 3 用于接收电子邮件的标准协议
+* IMAP：Internet Mail Access Protocol 互联网消息协议，是POP3的替代协议
+
+
+
+#### JavaMail
+
+SpringBoot整合JavaMail：
+
+1. 导入SpringBoot整合Javamail的依赖坐标：
+
+   ```xml
+   <dependency>
+       <groupId>org.springframework.boot</groupId>
+       <artifactId>spring-boot-starter-mail</artifactId>
+   </dependency>
+   ```
+
+2. 配置javamail：
+
+   ```yml
+   spring:
+     mail:
+       host: smtp.qq.com           #主机地址 这里使用的是QQ邮箱
+       username: xxxxxxxxxx@qq.com  #发件人用户账号
+       password: xxxxxxxxxx        #在邮箱中开启IMAP/SMTP和POP3/SMTP服务给的码
+   ```
+
+3. 设置**简单邮件**对象**SimpleMailMessage**的发送人、收件人、主题、正文内容，然后用**JavaMailSender发送**
+
+   例如：
+
+   ```java
+   @Service
+   public class MailServiceImpl implements MailService {
+       private final String Sender = "xxxxxxx@qq.com";//发件人
+       private final String Recipient = "xxxxxxxxx@qq.com";//收件人
+       private String subject = "测试邮件";//主题
+       private String context = "测试邮件内容";//正文
+   
+       @Autowired
+       private JavaMailSender javaMailSender;
+   
+       @Override
+       public void sendMail() {
+           SimpleMailMessage mailMessage = new SimpleMailMessage();
+           mailMessage.setFrom(Sender + "你爹");//替换掉发送人内的邮箱地址，显示设置的字符串
+           mailMessage.setTo(Recipient);
+           mailMessage.setSubject(subject);
+           mailMessage.setText(context);
+           javaMailSender.send(mailMessage);
+       }
+   }
+   ```
+
+
+
+发送多部件邮件：前面步骤与发送简单邮件一致，只是第三步不一样，变为了**设置MimeMessage**对象
+
+例如：
+
+```java
+@Service
+public class MailServiceImpl implements MailService {
+    private final String Sender = "1111111@qq.com";//发件人
+    private final String Recipient = "2222222@qq.com";//收件人
+    private String subject = "测试邮件";//主题
+    private String context = "<a href="www.4399.com">点击玩玩刺激的东西</a>;//正文
+
+    @Autowired
+    private JavaMailSender javaMailSender;
+
+    @Override
+    public void sendMail() {
+        MimeMessage mailMessage = javaMailSender,creatMimeMessage();
+        
+        MimeMessageHelper helper =  new MimeMessageHelper(mailMessage,true);//用这个MimeMessageHelper设置发送人、收件人、主题、正文内容;                                                                               true为开启多部件发送的功能，这样才可以发送附件
+        helper.setFrom(Sender + "Your Father");
+        helper.setTo(Recipient);
+        helper.setSubject(subject);
+        helper.setText(context,true);//true为开启了HTML解析 那么可以在正文中写入HTML格式的内容，比如超链接或者图片
+        
+        File f1 = new File("xxxx");
+        File f2 = new File("xxxx");
+        helper.addAttachment(f1.getName,f1);//添加邮件的附件
+        helper.addAttachment("附件名称",f2);
+        
+        javaMailSender.send(mailMessage);
+    }
+}
+```
+
+
+
+
 
 ### 消息
 
+> 消息发送方：生产者
+>
+> 消息接收方：消费者
+>
+> 消息分类：
+>
+> * 同步消息：发出消息之后必须要有回应，有了回应才会接着有后续动作
+> * 异步消息：只管发出消息，不需要有回应，发完消息就可以有后续动作（常用）
+>
+> MQ（Message Queue）：消息队列，是服务器将接收到的各式消息集中存储的地方，再由后续的独特功能子服务器在这消息队列中去搜寻所需消息
+
+
+
+企业级应用中广泛使用的三种**异步消息传递技术**：
+
+* JMS：（Java Message Service）一个**规范**，等同于JDBC规范，**提供了与消息服务相关的API接口**
+  * JMS消息模型：
+    * peer-2-peer：点对点模型，消息发送到一个队列中，队列保存消息，且**队列的消息只能被一个消费者消费**或超时
+    * **publish-subscribe**：（pub-sub）**发布订阅模型**，**消息可以被多个消费者消费**，生产者和消费者完全独立，不需要感知对方的存在
+  * JMS消息种类：
+    * TextMessage
+    * MapMessage
+    * **BytesMessage**
+    * StreamMessage
+    * ObjectMessage
+    * Message（只有消息头和属性）
+  * JMS实现：**ActiveMQ**，**Redis**，HornetMQ，**RabbitMQ**，**RocketMQ**（没有完全遵循JMS规范）
+
+
+
+* AMQP：（Advanced Message Queueing Protocol）高级消息队列协议，是一种**协议**，消息代理规范，**规范了网络交换的数据格式**，**兼容JMS**
+  * AMQP优点：跨平台，服务器供应商、生产者、消费者可以各自使用不同的编程语言实现
+  * AMQP消息模型：
+    * **direct exchange**
+    * fanout exchange
+    * **topic exchange**
+    * headers exchange
+    * system exchange
+  * AMQP消息种类：**byte[]（字节数组）**
+  * AMQP实现：**RabbitMQ**，StormMQ，**RocketMQ**
+
+
+
+* MQTT：（Message Queueing Telemetry Transport）消息队列遥测传输，转为小设备设计，是物联网（IOT）生态系统中的主要成分之一
+
+
+
+想要理解消息，那我们需要模拟一个业务：**购物订单业务**
+
+* 登录状态检测
+* 生成主单
+* 生成子单
+* 库存检测与变更
+* 积分变更
+* 支付
+* **短信通知（异步，我们模拟这一环节）**
+* 购物车维护
+* 运单信息初始化
+* 商品库存维护
+* 会员维护
+* 等等
+
+消息案例：**订单短信通知**
+
+* OrderService和OrderController，处理订单，内部对消息进行处理，调用MessageService
+* MessageService里用LinkedList模拟消息队列处理消息（之后整合各项MQ技术，就是更换这里的实现）
+
+
+
+
+
+#### ActiveMQ
+
+[ActiveMQ下载](https://activemq.apache.org/components/classic/download)
+
+ActiveMQ使用：
+
+* 启动服务：安装目录下的bin里的win64（根据自己的操作系统来）**双击运行 activemq.bat**
+* 访问服务器：`http://127.0.0.1:8161/`
+  * 服务端口61616，管理后台端口8161
+  * 默认用户名和密码：admin
+
+
+
+SpringBoot整合ActiveMQ：
+
+1. 导入坐标依赖
+
+   ```xml
+   <dependency>
+       <groupId>org.springframework.boot</groupId>
+       <artifactId>spring-boot-starter-activemq</artifactId>
+   </dependency>
+   ```
+
+2. 配置ActiveMQ的配置
+
+   ```yml
+   #ActiveMQ配置
+   spring:
+     activemq:
+       broker-url: tcp://localhost:61616 #连接的服务器地址 - tcp通信
+     jms:                                #遵循的JMS规范，所以设置在JMS中
+       template:
+         default-destination: wyh        #设置默认的保存位置 名称自定义
+       pub-sub-domain: true              #是否开启发布与订阅模型
+   ```
+
+3. 生产消息与消费消息
+
+   例如：
+
+   ```java
+   @Service
+   public class MessageServiceActiveMQImpl implements MessageService {
+       private JmsMessagingTemplate jmsMessagingTemplate;//遵循的JMS规范，所以是JmsTemplate
+       
+       @Autowired
+       public MessageServiceActiveMQImpl(JmsMessagingTemplate jmsMessagingTemplate) {
+           this.jmsMessagingTemplate = jmsMessagingTemplate;
+       }
+       
+       @Override
+       public void SendMessage(String id) {
+           System.out.println("消息已纳入消息队列 id: " + id);
+           jmsMessagingTemplate.convertAndSend("order.queue.id",id);//转换并存储消息到指定的队列中（没有这个消息队列则创建） - 生产消息
+       }
+   
+       @Override
+       public String doMessage() {
+           //从指定的队列获取消息，并指定转换消息的类型
+           String id = jmsMessagingTemplate.receiveAndConvert("order.queue.id",String.class);
+           System.out.println("已完成短信发送业务 id: " + id);//这是相当于手动消费消息
+           return id;
+       }
+   }
+   ```
+
+   监听器模拟自动消费消息：
+
+   ```java
+   @Component
+   public class MessageListener {
+   	//监听器在于不用手动的消费消息
+       @JmsListener(destination = "order.queue.id")//只要这个地方有消息，他就会立马自动消费掉
+       @SendTo("order.other.queue.id")//消息被消费完，将此方法的返回值放入到另外一个消息队列中作为消息，交给他们处理 -> 流程式处理
+       public String receive(String id) {
+           System.out.println("已完成短信发送业务 id: " + id);
+           return id;
+       }
+   }
+   ```
+
+   
+
+
+
+#### RabbitMQ
+
+RabbitMQ基于**Erlang语言**编写，需要有Erlang的环境
+
+* [Erlang下载](https://www.erlang.org/downloads)
+* 环境变量配置：
+  * ERLANG_HOME
+  * PATH
+* Erlang安装完需要重启下电脑
+
+
+
+[RabbitMQ下载](https://rabbitmq.com/install-windows.html)
+
+RabbitMQ使用：
+
+在RabbitMQ安装目录下的sbin目录中，启用cmd命令行输入命令
+
+* 启动服务：`rabbitmq-service.bat start`
+* 关闭服务：`rabbitmq-service.bat stop`
+* 查看服务状态：`rabbitmqctl status`
+* 服务管理可视化（插件形式）
+  * 查看已安装的插件列表：`rabbitmq-plugins.bat list`
+  * 开启服务管理插件：`rabbitmq-plugins.bat enable rabbitmq_management`
+  * 访问服务器：`http://localhost:15672`
+    * 服务端口：**5672**（我们使用的是这个），管理后台端口：15672（浏览器访问端口）
+    * 用户名和密码：默认guest
+
+
+
+SpringBoot整合RabbitMQ：
+
+* Direct模式：（直连）
+
+  1. 导入RabbitMQ的坐标依赖
+
+     ```xml
+     <dependency>
+         <groupId>org.springframework.boot</groupId>
+         <artifactId>spring-boot-starter-amqp</artifactId><!--遵循的是AMQP协议，所以为amqp-->
+     </dependency>
+     ```
+
+  2. 配置RabbitMQ
+
+     ```yml
+     spring:
+       #RabbitMQ配置
+       rabbitmq:
+         host: localhost
+         port: 5672
+     ```
+
+  3. 在RabbitMQ的Direct配置类中设置Direct模式下的消息队列专用的消息队列对象、交换机、绑定关系：
+
+     ```java
+     @Configuration
+     public class RabbitMQDirectConfig {
+         //定义存储消息的消息队列对象
+         @Bean
+         public Queue directQueue() {
+             /*
+             durable：是否持久化 默认true
+             exclusive：是否当前连接专用 连接关闭后队列即被删除 默认为false
+             autoDelete：是否自动删除 当生产者或者消费者不再使用此队列时自动删除 默认为false
+             */
+             return new Queue("directQueue");//后面三个默认boolean值，为是否持久化、是否当前连接专用，是否删除
+         }
+     
+         //定义交换机对象 - 一个交换机对象可以绑定多个消息队列对象 - 可复用
+         @Bean
+         public DirectExchange directExchange() {
+             return new DirectExchange("directExchange");
+         }
+     
+         //定义绑定关系
+         @Bean
+         public Binding directBinding() {
+             //绑定消息队列对象到交换机上，取个名字为"direct"
+             return BindingBuilder.bind(directQueue()).to(directExchange()).with("direct");
+         }
+     }
+     ```
+
+  4. 模拟生产者生产消息
+
+     ```java
+     @Service
+     public class MessageServiceRabbitMQDirectImpl implements MessageService {
+         private final AmqpTemplate amqpTemplate;
+     
+         @Autowired
+         public MessageServiceRabbitMQDirectImpl(AmqpTemplate amqpTemplate) {
+             this.amqpTemplate = amqpTemplate;
+         }
+     
+         @Override
+         public void SendMessage(String id) {
+             System.out.println("消息已纳入消息队列 id(RabbitMQ - Direct): " + id);
+             //指定交换机、绑定关系、消息 - 为生产消息
+             amqpTemplate.convertAndSend("directExchange","direct",id);
+         }
+     }
+     ```
+
+  5. 监听器模拟消费消息（当有**多个监听器监听到同一个消息队列时，这些监听器会轮询处理统一消息队列的消息**）
+
+     ```java
+     @Component
+     public class MessageListener {
+         @RabbitListener(queues = {"directQueue"})//指定监听的是哪些消息队列 - 字符串数组
+         public void receive(String id) {
+             System.out.println("已完成短信发送业务 id(RabbitMQ - Direct): " + id);//模拟消费消息
+         }
+     }
+     ```
+
+
+
+
+* Topic模式：（话题）
+
+  1. 导入的依赖和配置和Direct模式一样
+
+  2. 在RabbitMQ的Topic配置类中设置Topic模式下的消息队列专用的消息队列对象、交换机、绑定关系
+
+     ```java
+     @Configuration
+     public class RabbitMQTopicConfig {
+         //定义存储消息的消息队列对象
+         @Bean
+         public Queue topicQueue1() {
+             return new Queue("topicQueue1");//后面三个默认boolean值，为是否持久化、是否当前连接专用，是否删除
+         }
+     
+         @Bean
+         public Queue topicQueue2() {
+             return new Queue("topicQueue2");//后面三个默认boolean值，为是否持久化、是否当前连接专用，是否删除
+         }
+     
+         //定义交换机对象
+         @Bean
+         public TopicExchange topicExchange() {
+             return new TopicExchange("topicExchange");
+         }
+     
+         //定义绑定关系
+         @Bean
+         public Binding topicBinding1() {
+             //绑定消息队列对象到交换机上，取个名字为"topic.*.id" - 这是设置了一种绑定规则，满足条件的消息就会放入这个绑定关系中
+             return BindingBuilder.bind(topicQueue1()).to(topicExchange()).with("topic.*.id");
+         }
+     
+         @Bean
+         public Binding topicBinding2() {
+             //绑定消息队列对象到交换机上，取个名字为"topic.orders.*" - 设置了一种绑定规则，满足条件的消息就会放入这个绑定关系中
+             return BindingBuilder.bind(topicQueue2()).to(topicExchange()).with("topic.orders.*");
+         }
+     }
+     ```
+
+     [知识补充] Topic模式下的**绑定规则匹配**：
+
+     * *（星号）：**表示一个单词**，必须有一个单词
+     * #（井号）：表示**任意数量的单词**
+
+     |       匹配键       | topic.\*.\* | topic.# |
+     | :----------------: | :---------: | :-----: |
+     |   topic.order.id   |    true     |  true   |
+     |   order.topic.id   |    false    |  false  |
+     | topic.ssm.order.id |    false    |  true   |
+     |    topic.ssm.id    |    true     |  true   |
+     |   topic.id.order   |    true     |  true   |
+     |      topic.id      |    false    |  true   |
+     |    topic.order     |    false    |  true   |
+
+  3. 模拟生产者生产消息
+
+     ```java
+     @Service
+     public class MessageServiceRabbitMQTopicImpl implements MessageService {
+         private final AmqpTemplate amqpTemplate;
+     
+         @Autowired
+         public MessageServiceRabbitMQTopicImpl(AmqpTemplate amqpTemplate) {
+             this.amqpTemplate = amqpTemplate;
+         }
+     
+         @Override
+         public void SendMessage(String id) {
+             System.out.println("消息已纳入消息队列 id(RabbitMQ - Topic): " + id);
+             //指定交换机、绑定关系、消息 - 为生产消息
+             amqpTemplate.convertAndSend("topicExchange","topic.orders.id",id);//这里写的"topic.orders.id"是为了匹配上定义好的两种绑定匹配规则
+         }
+     
+         @Override
+         public String doMessage() {
+             return null;
+         }
+     }
+     ```
+
+  4. 监听器模拟消费消息（当有**多个监听器监听到同一个消息队列时，这些监听器会轮询处理统一消息队列的消息**）
+
+     ```java
+     @Component
+     public class MessageListener {
+         @RabbitListener(queues = {"topicQueue1"})//指定监听的是哪个消息队列
+         public void receive1(String id) {
+             System.out.println("已完成短信发送业务 id(RabbitMQ - Topic1): " + id);//模拟消费消息
+         }
+     
+         @RabbitListener(queues = {"topicQueue2"})//指定监听的是哪个消息队列
+         public void receive2(String id) {
+             System.out.println("已完成短信发送业务 id(RabbitMQ - Topic2): " + id);//模拟消费消息
+         }
+     }
+     ```
+
+
+
+【注】Topic模式比Direct模式更强大，可以自定义消息匹配规则
+
+
+
+
+
+#### RocketMQ
+
+
+
+[RocketMQ下载](https://rocketmq.apache.org/)
+
+* 环境变量配置：
+
+  * ROCKETMQ_HOME
+
+  * Path
+
+  * NAMESRV_ADDR：127.0.0.1:9876
+
+    （也就是配置了一个**命名服务器** **NameServer**，生产者和消费者访问命名服务器，由命名服务器转接**子业务服务器** **Broker**）
+
+    （方便我们启动broker的时候不需要再打开cmd界面设置这个值才能启动）
+
+* 默认服务端口：9876
+
+
+
+RocketMQ使用：
+
+* 先启动命名服务器：安装目录下的bin目录下，双击 `mqnamesrv.cmd`启动
+* 再启动业务服务器：安装目录下的bin目录下，双击 `mqbroker.cmd`启动
+
+
+
+SpringBoot整合RocketMQ：
+
+1. 导入RocketMQ坐标依赖
+
+   ```xml
+   <!-- https://mvnrepository.com/artifact/org.apache.rocketmq/rocketmq-spring-boot-starter -->
+   <!-- RocketMQ -->
+   <dependency>
+       <groupId>org.apache.rocketmq</groupId>
+       <artifactId>rocketmq-spring-boot-starter</artifactId>
+       <version>2.2.2</version>
+   </dependency>
+   ```
+
+2. 配置RocketMQ - 默认配置
+
+   ```yml
+   #RocketMQ配置
+   rocketmq:
+     name-server: localhost:9876         #连接命名服务器
+     producer:
+       group: rocketMQ_group             #对生产者分组，使其初始化成功 - 组名无所谓，这是必要的配置，不然会启动报错
+   ```
+
+3. 模拟生产者生产消息
+
+   ```java
+   @Service
+   public class MessageServiceRocketMQImpl implements MessageService {
+       private final RocketMQTemplate rocketMQTemplate;
+   
+       @Autowired
+       public MessageServiceRocketMQImpl(RocketMQTemplate rocketMQTemplate) {
+           this.rocketMQTemplate = rocketMQTemplate;
+       }
+   
+       @Override
+       public void SendMessage(String id) {
+           System.out.println("消息已纳入消息队列 id(RocketMQ): " + id);
+           //rocketMQTemplate.convertAndSend("order_id",id);//这是一种同步消息，不常用
+           rocketMQTemplate.asyncSend("order_id", id, new SendCallback() {//异步消息，多了一个回调方法参数，常用
+               @Override
+               public void onSuccess(SendResult sendResult) {//消息成功发送到消息队列时的行为 - 也就是发完消息后的回调操作
+                   System.out.println("消息发送成功");
+               }
+   
+               @Override
+               public void onException(Throwable throwable) {//消息发送到消息队列失败时的行为
+                   System.out.println("消息发送失败");
+               }
+           });
+       }
+   }
+   ```
+
+4. 监听器模拟消费消息
+
+   ```java
+   @Component
+   /*
+   	指定监听的消息队列名
+   	和
+   	指定消息来自哪个生产者组名（先前在配置文件中配置的生产者组名），让生产者和消费者在同一个组
+   */
+   @RocketMQMessageListener(topic = "order_id", consumerGroup = "rocketMQ_group")
+   public class MessageListener implements RocketMQListener<String> {//实现RocketMQ自带的监听器接口，泛型为消息类型
+       @Override
+       public void onMessage(String s) {
+           System.out.println("已完成短信发送业务 id(RocketMQ): " + s);
+       }
+   }
+   ```
+
+   
+
+
+
+#### kafka
+
+> 一种高吞吐量的分布式发布订阅消息系统，提供实时消息功能
+>
+> 它的主要功能不是用于消息队列的，但是依然可以使用
+
+
+
+[kafka下载](https://kafka.apache.org/downloads)
+
+* Windows系统下3.0.0版本存在BUG，建议使用2.X版本
+
+
+
+kafka使用：安装目录下的bin目录中的windows目录下，开启cmd命令行
+
+* 先启动zookeeper（相当于一个命名服务器）：`zookeeper-server-start.bat ../../config/zookeeper.properties`
+  * 默认端口：2181
+* 再启动kafka（这个才是用的服务器）：`kafka-server-start.bat ../../config/server.properties`
+  * 默认端口：9092
+
+* 测试：
+
+  * 先拥有topic：（**这里的topic可以理解为一个个消息队列对象**）
+
+  * 创建topic：
+
+    ```asciiarmor
+    kafka-topics.bat --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic wyh
+    ```
+
+    * 查看topic：
+
+      ```asciiarmor
+      kafka-topics.bat --zookeeper 127.0.0.1:2181 --list
+      ```
+
+    * 删除topic：
+
+      ```asciiarmor
+      kafka-topics.bat --delete --zookeeper localhost:2181 --topic wyh
+      ```
+
+    
+
+  * 生产者功能测试：
+
+    ```asciiarmor
+    kafka-console-producer.bat --broker-list localhost:9092 --topic wyh
+    ```
+
+  * 消费者功能测试：
+
+    ```asciiarmor
+    kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic wyh --from-beginning
+    ```
+
+
+
+SpringBoot整合kafka：
+
+1. 导入kafka坐标依赖
+
+   ```xml
+   <dependency>
+       <groupId>org.springframework.kafka</groupId>
+       <artifactId>spring-kafka</artifactId>
+   </dependency>
+   ```
+
+2. 配置kafka
+
+   ```yml
+   spring:
+     #kafka配置
+     kafka:
+       bootstrap-servers: localhost:9092 #指定访问的服务器地址
+       consumer:
+         group-id: order                 #在开启监听功能时的必须配置 配置给consumer 不然会报错 名称随意
+   ```
+
+3. 模拟生产者生产消息
+
+   ```java
+   @Service
+   public class MessageServerKafkaImpl implements MessageService {
+       private final KafkaTemplate<String,String> kafkaTemplate;
+   
+       @Autowired
+       public MessageServerKafkaImpl(KafkaTemplate<String, String> kafkaTemplate) {
+           this.kafkaTemplate = kafkaTemplate;
+       }
+   
+       @Override
+       public void SendMessage(String id) {
+           kafkaTemplate.send("wyh",id);//将消息传入到kafka的topic中，第一个参数即为指定已存在的topic
+           System.out.println("消息已纳入消息队列(Kafka) id: " + id);
+       }
+   }
+   ```
+
+4. 监听器模拟消费者消费消息
+
+   ```java
+   @Component
+   public class MessageListener {
+       @KafkaListener(topics = {"wyh"})//指定监听的是哪个topic
+       public void doMessage(ConsumerRecord<String, String> record) {//kafka使用的接收消息的类型 - ConsumerRecord
+           System.out.println("已完成短信发送业务 id(Kafka): " + record.value());//用value方法取出消息队列里的消息
+       }
+   }
+   ```
+
+   
+
+
+
 ## 6. 监控🔍
+
+> 监控的意义：
+>
+> * 监控服务状态是否宕机
+> * 监控服务运行指标（内存，虚拟机，线程，请求等）
+> * 监控日志
+> * 管理服务（强制服务下线）
+>
+> 总之，就是盯着服务器的状态，根据状态做出相应的调整
+
+
+
+### 监控的实施方式
+
+
+
+**显示监控服务信息的服务器**：用于**主动获取服务信息**，并显示对应的信息
+
+**各个运行的服务**：**启动时要主动上报，告知监控服务器自己需要受到监控**
+
+
+
+
+
+### 可视化监控平台
+
+> 显示监控服务信息的服务器如果要自己实现太麻烦了，所以有人已经帮我们实现了
+
+
+
+#### Spring Boot Admin
+
+> 开源社区项目 - 不是SpringBoot官方的
+>
+> 用于管理和监控SpringBoot应用程序
+>
+> 客户端注册到服务端后，通过HTTP请求方式，服务端定期从客户端获取对应的信息，并通过浏览器中的UI界面展示对应信息
+
+
+
+Spring Boot Admin使用：
+
+* 配置SpringBootAdmin的**服务端**：
+
+  1. 导入Admin的服务端依赖坐标
+
+     ```xml
+     <dependency>
+         <groupId>de.codecentric</groupId>
+         <artifactId>spring-boot-admin-starter-server</artifactId>
+         <version>2.5.4</version> <!--admin的版本由自己控制，SpringBoot没有管控，版本要与SpringBoot一致-->
+     </dependency>
+     ```
+
+  2. 将服务端设置为web项目，并配置：（这样我们才能在浏览器里通过UI监控）
+
+     ```xml
+     <dependency>
+         <groupId>org.springframework.boot</groupId>
+         <artifactId>spring-boot-starter-web</artifactId>
+     </dependency>
+     ```
+
+     ```yml
+     server:
+       port: 8080
+     ```
+
+  3. 在服务端的启动类上添加**@EnableAdminServer注解**，**开启SpringBAdmin的功能**，然后启动，前往浏览器输入地址即可查看到监控的UI界面
+
+
+
+* 配置SpringBootAdmin的**客户端**：
+
+  1. 导入Admin的客户端依赖坐标
+
+     ```xml
+     <dependency>
+         <groupId>de.codecentric</groupId>
+         <artifactId>spring-boot-admin-starter-client</artifactId>
+         <version>2.5.4</version> <!--admin的版本由自己控制，SpringBoot没有管控，版本要与SpringBoot一致-->
+     </dependency>
+     ```
+
+  2. 配置客户端
+
+     ```yml
+     spring:
+       boot:
+         admin:
+           client:
+             url: http://localhost:8080   #设置监控的信息交到哪里  - 也就是我们配置好的Admin服务端地址
+     server:
+       port: 80                           #客户端最好也是一个web项目，不然无法持久化的监控
+     
+     management:
+       endpoint:                          #各个端点配置
+         health:							 #health端点
+           show-details: always           #设置健康指标都可以看 默认为never-不可以
+       endpoints:
+         web:                             #开启web请求下的某项监控信息是否显示 - 默认为health端点可看
+           exposure:
+             include: "*"                 #开启监控所有的endpoint 默认为health的endpoint - *为所有endpoint
+         enabled-by-default: true         #开启所有端点的监控信息递送
+     ```
+
+  
+
+然后我们就**通过浏览器的服务端UI界面监控各个客户端服务**
+
+
+
+
+
+### 监控原理
+
+
+
+* **Actuator**提供了SpringBoot生产就绪的功能，通过端点的配置与访问，获取端点的信息
+* 端点：描述了一组监控信息，SpringBoot提供了多个内置端点，也可以根据需要自定义端点信息
+
+
+
+* 访问当前应用的所有端点的信息：/actuator
+* 访问某端点的详细信息：/actuator/端点名称
+  * 一些常用端点：
+    * health：显示应用程序的健康信息 -- 健康
+    * loggers：显示和修改应用程序中日志记录器的配置 -- 日志
+    * metrics：显示当前应用程序的指标度量信息 -- 性能
+
+
+
+端点的配置：
+
+```yml
+management:
+  endpoint:                          #各个端点配置
+    health:							 #health端点 - 具体某个端点
+      enabled: true                  #是否启用该端点 - 单一端点
+      show-details: always           #设置健康指标都可以看 默认为never-不可以
+  endpoints:
+    enabled-by-default: true         #开启所有端点的监控信息递送 - 所有端点
+```
+
+
+
+[知识补充] JMX访问方式：
+
+* SpringBootAdmin为web的访问形式
+* 我们可以在cmd界面上输入：jconsole，即可**使用Java自带的监控管理平台**
+
+
+
+
+
+### 自定义监控指标
+
+
+
+我们可以为各端点添加自定义指标
+
+
+
+info端点：
+
+* 方式一：可以在项目配置文件中添加info端点配置，可以直接添加自定义信息
+
+  ```yml
+  info:
+    author: "王钇欢"
+  ```
+
+* 方式二：创建一个info配置类，以编程的手段添加自定义信息
+
+  例如：
+
+  ```java
+  @Component//要受Spring管理
+  public class InfoConfig implements InfoContributor {//需要实现SpringBootAdmin提供的接口 - InfoContributor
+      @Override
+      public void contribute(Info.Builder builder) {//实现这个方法，并用builder直接添加自定义消息
+          Date time = new Date(System.currentTimeMillis());
+          SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+          String timeStr = simpleDateFormat.format(time);
+          builder.withDetail("runTime",timeStr);//withDetail方法为直接添加键值对，为一条信息
+  
+          Map<String,Object> infoMap = new HashMap<>();
+          infoMap.put("buildTime","2022/11/25");
+          builder.withDetails(infoMap);//withDetails方法为添加Map集合，为多条信息
+      }
+  }
+  ```
+
+  
+
+health端点：
+
+
+
+
 
 
 
