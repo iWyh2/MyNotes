@@ -465,7 +465,7 @@ Druid也没有被收录，可惜
           driver-class-name: com.mysql.cj.jdbc.Driver
           url: jdbc:mysql://localhost:3306/db1?serverTimezone=UTC
           username: root
-          password: '020920'
+          password: 'xxxxx'
           type: com.alibaba.druid.pool.DruidDataSource
     ```
 
@@ -478,7 +478,7 @@ Druid也没有被收录，可惜
           driver-class-name: com.mysql.cj.jdbc.Driver
           url: jdbc:mysql://localhost:3306/db1?serverTimezone=UTC
           username: root
-          password: '020920'
+          password: 'xxxxxx'
     ```
 
 
@@ -496,7 +496,7 @@ Druid也没有被收录，可惜
 
 # 4. SSM案例📄
 
-> 已经在[SSM基础框架.md]中做过了，这里是相当于再做了一遍
+> 已经在[SSM基础框架.md](D:\Git\GitLocalRepository\Java\3-SSM\SSM基础框架.md)中做过了，这里是相当于再做了一遍
 
 
 
@@ -524,6 +524,8 @@ Druid也没有被收录，可惜
   * 还有项目中的异常处理
 
 
+
+详情请看IDEA-SpringBoot2工程的07项目SSM
 
 
 
@@ -571,8 +573,8 @@ MP还可以为业务层进行快速开发，提高效率
 ```java
 @Data
 public class Data {
-	private Boolean flag;
-	private Object content;
+	private Boolean flag;//状态回馈
+	private Object content;//数据内容
     
     public Data() {
     }
@@ -686,6 +688,8 @@ taskkill -f -t -im "进程名称"
 ### 项目打包-Linux环境*
 
 跳过了这一章节（P56）之后学了Linux补充（2022/11/2)
+
+
 
 
 
@@ -1219,7 +1223,7 @@ devtools:
 
 除此之外，@ConfigurationProperties可以**为第三方bean绑定属性**
 
-也就是读取YAML文件中的属性，然后添加到对应的bean中
+也就是**读取YAML文件中的属性，然后添加到对应的bean中**
 
 `@ConfigurationProperties(prefix="xxxx")`：prefix为YAML中对应的属性对象的属性名
 
@@ -1242,7 +1246,9 @@ devtools:
 
 
 
-### 宽松绑定/松散绑定
+### 宽松绑定
+
+也叫松散绑定
 
 **@ConfigurationProperties**绑定属性**支持属性名宽松绑定**
 
@@ -1299,6 +1305,8 @@ devtools:
 
 2. 为需要校验的字段添加校验注解：比如@Max、@Min等，为校验规则
 
+2. 
+
 3. 规范只是校验的大前提，并不是实现，没有实现会报错，所以我们还需要添加校验的实现：**Hibernate校验框架**
 
    ```xml
@@ -1349,7 +1357,7 @@ datetime: 2002-09-20T13:14:52+08:00    #时间和日期之间用 T 连接，+后
 
 **@SpringBootTest注解**中，有一个**properties属性**，可以**设置测试环境专用的属性**（可以覆盖掉配置文件中的一些属性）
 
-**@SpringBootTest注解**中，有一个**args属性**，可以**设置测试环境专用的命令行传入参数**（可以用于模拟命令行传参）
+**@SpringBootTest注解**中，有一个**args属性**，可以**设置测试环境专用的命令行传入参数**（可以用于模拟命令行传参）                                                                                                                                                                                                                                                      
 
 * 影响范围小，仅对当前测试类有效
 
@@ -2742,11 +2750,12 @@ SpringBoot整合Quartz：
 
 ### 邮件
 
-相关概念：
-
-* SMTP：Simple Mail Transfer Protocol 简单邮件传输协议，用于发送电子邮件的传输协议
-* POP3：Post Office Protocol - Version 3 用于接收电子邮件的标准协议
-* IMAP：Internet Mail Access Protocol 互联网消息协议，是POP3的替代协议
+> 相关概念：
+>
+> * SMTP：Simple Mail Transfer Protocol 简单邮件传输协议，用于发送电子邮件的传输协议
+> * POP3：Post Office Protocol - Version 3 用于接收电子邮件的标准协议
+> * IMAP：Internet Mail Access Protocol 互联网消息协议，是POP3的替代协议
+>
 
 
 
@@ -3570,6 +3579,7 @@ Spring Boot Admin使用：
 
 
 * **Actuator**提供了SpringBoot生产就绪的功能，通过端点的配置与访问，获取端点的信息
+* SpringBootAdmin就是加入了Actuator的坐标依赖
 * 端点：描述了一组监控信息，SpringBoot提供了多个内置端点，也可以根据需要自定义端点信息
 
 
@@ -3648,9 +3658,83 @@ info端点：
 
 health端点：
 
+代表一个应用的状态信息，**一般是很重要的**才会加进去
+
+我们自定义的health指标会加载health端点里面显示：
+
+例如：
+
+```java
+@Component
+public class HealthConfig extends AbstractHealthIndicator {//为health端点加指标，只需要继承AbstractHealthIndicator
+    @Override
+    protected void doHealthCheck(Health.Builder builder) throws Exception {
+        boolean condition = true;
+        if (condition) {
+            builder.status(Status.UP);//标记这个的状态为UP
+            Date time = new Date(System.currentTimeMillis());
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+            String timeStr = simpleDateFormat.format(time);
+            builder.withDetail("runTime",timeStr);
+
+            Map<String,Object> infoMap = new HashMap<>();
+            infoMap.put("buildTime","2022/11/25");
+            builder.withDetails(infoMap);
+        } else {
+            builder.status(Status.OUT_OF_SERVICE);//标记这个的状态为OUT_OF_SERVICE
+            builder.withDetail("服务状态","Exception");
+        }
+    }
+}
+```
 
 
 
+metrics端点：（代表性能端点）
+
+为Metrics端点添加自定义指标：比如用户付费次数指标（也就是一个统计操作）
+
+例如：
+
+```java
+@Service
+public class BookServiceImpl implements BookService {
+    private Counter counter;
+    public BookServiceImpl(MeterRegistry meterRegistry) {//构造器注入 MeterRegistry对象 用于为metrics端点添加指标
+        counter = meterRegistry.counter("用户付费操作次数: ");//选择统计指标，并为指标取名
+    }
+    
+    @Override
+    public boolean pay() {
+        counter.increment();//只要调用了这个业务一次，就会计数一次
+        return true;
+    }
+}
+```
+
+
+
+**自定义端点**：
+
+除了info，health等端点，我们还可以自己定义一个端点：比如支付端点
+
+```java
+@Component
+@Endpoint(id = "pay",enableByDefault = true)//定义端点名称 和 是否默认被读取（默认为true）
+public class PayEndpoint {
+    //一个端点被定义了，还需要有相应的操作方法才可以被监控
+    @ReadOperation//对端点的读操作
+    public Object pay() {
+        //这里应该调用具体的业务操作，获取相应的端点应该具有的信息
+        Map<String,String> payMap = new HashMap<>();
+        payMap.put("Level 1","100");
+        payMap.put("Level 2","200");
+        payMap.put("Level 3","300");
+
+        return payMap;//会自动的转为JSON格式数据返回
+    }
+}
+```
 
 
 
@@ -3659,3 +3743,1203 @@ health端点：
 
 
 # [原理篇]
+
+
+
+# 自动配置⚙
+
+
+
+## bean的加载方式
+
+
+
+一：xml+\<bean/>
+
+**XML加载方式**
+
+在Spring的配置文件中（应用上下文）定义
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!--XML方式声明自己开发的bean-->
+    <bean id="cat" class="com.wyh.bean.Cat"/>
+    <bean class="com.wyh.bean.Dog" scope="singleton"/>
+
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource"/>
+</beans>
+```
+
+
+
+
+
+二：xml:context+注解
+
+**XML+注解声明方式**
+
+1. 要想使用注解并被Spring容器扫描到，需要开启一个新的xmlnamespace：
+
+   ```xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   <beans xmlns="http://www.springframework.org/schema/beans"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          
+          xmlns:context="http://www.springframework.org/schema/context"
+          
+          xsi:schemaLocation="
+          http://www.springframework.org/schema/beans
+          http://www.springframework.org/schema/beans/spring-beans.xsd
+                              
+          http://www.springframework.org/schema/context
+          http://www.springframework.org/schema/context/spring-context.xsd
+   ">
+       <!--开启一个全新的xmlnamespace（命名空间）：context 格式：xmlns:context="http://www.springframework.org/schema/context"
+         同时xsi:schemaLocation中加入命名空间对应的地址 格式：http://www.springframework.org/schema/context
+                                                        http://www.springframework.org/schema/beans/spring-context.xsd
+   -->
+   
+   
+       <!--指定加载bean（Component）的位置-->
+       <context:component-scan base-package="com.wyh.bean,com.wyh.config"/>
+   
+   
+   </beans>
+   ```
+
+2. 然后我们就可以将**自己开发的bean**加上**@Component**及其衍生注解**@Controller**，**@Service**，**@Repository**，将其定义为bean，后加括号设置bean的id
+
+   **第三方的bean**要想加入到Spring容器，就需要**以方法的返回值返回这个第三方bean的对象**来注入到容器中，这个方法一般在称为配置类中，并使用**@Bean**
+
+   ```java
+   @Configuration//这个配置类也得是Spring容器中的，所以@Component和@Configuration是一样的，一般做配置的类建议用@Configuration
+   public class DBConfig {//一般是一个配置类
+       @Bean//将方法的返回值定义为Spring管控的bean
+       public DruidDataSource dataSource() {
+           return new DruidDataSource();
+       }
+   }
+   ```
+
+
+
+
+
+三：配置类+扫描+注解
+
+**注解方式声明Spring配置类（去掉XML文件）**
+
+以一个配置类直接代替xml文件，component-scan变为了**@ComponentScan**
+
+```java
+@ComponentScan({"com.wyh.bean","com.wyh.config"})//指定扫描bean的位置 -> 也就是component-scan
+public class SpringConfig {//这个类就代替了xml文件
+}
+```
+
+【注】这个Spring的配置类，在**AnnotationConfigApplicationContext**构造时，传入的类也会变为一个Bean，所以SpringConfig也会成为一个Bean，所以不用加@Configuration，也就是这个**配置类如果不被扫描，那么可以省略@Configuration**
+
+例如：
+
+```java
+AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(SpringConfig.class);
+```
+
+
+
+扩展-1：**FactoryBean接口**
+
+初始化实现FactoryBean接口的类，**实现对bean加载到容器之前的批处理操作**
+
+例如：
+
+```java
+public class BookFactoryBean implements FactoryBean<Book> {
+    /*
+    	实现FactoryBean接口需要至少实现这两个方法，一个是返回对象，一个是返回对象类型，还有一个是 指定是否为单例（一般默认为单例）
+    */
+    public Book getObject() throws Exception {
+        Book book = new Book();
+        //进行对book对象的相关初始化操作 这也就是FactoryBean的作用
+        return book;
+    }
+    
+    public Class<?> getObjectType() {
+        return Book.class;
+    }
+}
+```
+
+实现了这个FactoryBean接口了之后，我们在用方法返回值将Bean加入到Spring容器时，可以用这个FactoryBean类型获取想要的类型对象
+
+例如：
+
+```java
+@Bean
+public BookFactoryBean book() {//这个BookFactoryBean本身不会成为一个bean，而是会被调用里面的getObject，将该方法的返回值作为bean放入Spring容器
+	return new BookFactoryBean();
+}
+```
+
+
+
+扩展-2：**@ImportResource注解**
+
+**加载配置类的时候同时加载配置文件**（可以做系统迁移）
+
+也就是向一个以注解声明Bean的项目中，加入XML中声明的bean，使用**@ImportResource注解**
+
+例如：
+
+```java
+@Configuration
+@ComponentScan("com.wyh")
+@ImportResource("applicationContext-config.xml")//加载xml中的配置
+public class SpringConfig {}
+```
+
+
+
+扩展-3：**@Configuration**的**proxyBeanMethods**属性
+
+@Configuration和@Component的区别在于多了个proxyBeanMethods属性，**此属性是保障调用获取Bean的方法得到的对象是从Spring容器中获取的，也就是复用的，而不是重新创建的**。
+
+此属性，将类的对象变为了**代理对象**，通过这个代理对象去调用自己里面的获取Bean的方法，就会去Spring容器查找已经被加载的Bean
+
+例如：
+
+```java
+@Configuration(proxyBeanMethods=true)//默认值为true，开启代理Bean方法
+public class SpringConfig {
+    @Bean//让这个对象被加载在Spring容器中，代理对象SpringConfig就会去Spring容器找
+    public Book book() {
+     return new Book();   
+    }
+}
+
+//----------------------------------------
+
+public class App {
+    public static void main(String[] args) {
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(SpringConfig.class);
+        SpringConfig springConfig = context.getBean("springConfig",SpringConfig.class);
+        springConfig.book();
+        springConfig.book();//这两次调用得到的Book对象是同一个
+    }
+}
+```
+
+这也就解释了在消息队列的配置类中，我们绑定交换机和消息队列时，例如：
+
+```java
+return BindingBuilder.bind(topicQueue1()).to(topicExchange()).with("topic.*.id");
+```
+
+是调用的方法来获取消息队列和交换机来执行绑定的，就是因为配置类上的@Configuration默认开启了代理Bean方法
+
+
+
+
+
+四：**@Import**导入的方式
+
+使用@Import注解导入要注入的bean的字节码文件即可
+
+例如：
+
+```java
+@Import({Dog.class, Cat.class})//只能导入一次
+public class SpringConfig2 {
+}
+```
+
+【注】**被导入的bean无需声明为bean**，可以有效地降低耦合度
+
+
+
+扩展：可以**使用@Import导入配置类**
+
+```java
+@Import({DBConfig.class})
+```
+
+这样的话，这个**配置类会成为bean**，同时**配置类里面声明的bean也会被加载**到Spring容器
+
+
+
+
+
+五：**上下文对象调用register方法**
+
+在上下文对象**容器初始化完成之后，手工注册加载bean**
+
+例如：
+
+```java
+public static void main(String[] args) {
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(SpringConfig2.class);
+        //在Spring的应用程序上下文对象初始化完毕后，手工的注册加载bean
+        context.registerBean("tom", Cat.class);
+        context.registerBean("tom", Cat.class);//覆盖思想，后加载的覆盖之前的
+        context.register(Mouse.class);//直接加载类的字节码，bean的id为类的首字母小写
+        for (String beanDefinitionName : context.getBeanDefinitionNames()) {
+            System.out.println(beanDefinitionName);
+        }
+    }
+```
+
+
+
+
+
+六：@Import导入**ImportSelector接口**，条件式
+
+也就是对于实现了ImportSelector接口的类，我们**可以编程式的控制需要加载的bean或者条件式的做一些逻辑**
+
+而**导入了实现了ImportSelector接口的类的类，也就是一个元数据**，我们可以获取元数据的一些数据。同时我们可以在实现了ImportSelector接口的类里面进行条件控制
+
+例如：
+
+```java
+public class MyImportSelector implements ImportSelector {
+    @Override
+    public String[] selectImports(AnnotationMetadata metadata) {//我们可以获取元数据的信息 metadata就是元数据
+        System.out.println("metadata: "+metadata.getClassName());//获取元数据类名
+        //判断元数据是否含有某个注解
+        System.out.println("metadata: "+metadata.hasAnnotation("org.springframework.context.annotation.Configuration"));
+		//获取元数据的某个注解的属性值
+        Map<String, Object> attributes = metadata.getAnnotationAttributes("org.springframework.context.annotation.ComponentScan");
+        System.out.println(attributes);
+        
+        //根据元数据的信息进行条件判断，从而控制bean的加载
+        if (metadata.hasAnnotation("org.springframework.context.annotation.Configuration")) {
+            return new String[]{"com.wyh.Mouse"};
+        }
+
+        return new String[]{"com.wyh.bean.Dog","com.wyh.bean.Cat"};
+    }
+}
+```
+
+```java
+@Import({MyImportSelector.class})//这里导入了实现了ImportSelector接口的类，那么SpringConfig3就是一个元数据
+@Configuration
+@ComponentScan("com.wyh.bean")
+public class SpringConfig3 {
+}
+```
+
+
+
+
+
+七：@Import导入**ImportBeanDefinitionRegistrar接口**
+
+导入实现了ImportBeanDefinitionRegistrar接口的类，与ImportSelector一样，会成为一个元数据
+
+在实现了ImportBeanDefinitionRegistrar接口的类的里面，我们可以**通过BeanDefinition的注册器注册实名bean，实现对容器中bean的绑定，或者对现有bean的覆盖，进而达到在不修改源代码的条件下，更换实现的效果**
+
+例如：
+
+```java
+public class MyRegistrar implements ImportBeanDefinitionRegistrar {
+    @Override
+    public void registerBeanDefinitions(AnnotationMetadata metadata, BeanDefinitionRegistry registry) {
+        //可以拿元数据进行条件判断
+
+        //然后拿registry对象注册bean
+        //用BeanDefinitionBuilder生成一个bean同时获取他的BeanDefinition对象
+        BeanDefinition beanDefinition = BeanDefinitionBuilder.rootBeanDefinition(Dog.class).getBeanDefinition();
+        //然后注册bean，指定beanID名和哪个bean的BeanDefinition对象
+        registry.registerBeanDefinition("yellow",beanDefinition);
+    }
+}
+```
+
+
+
+
+
+八：@Import导入**BeanDefinitionRegistryPostProcessor**接口，**后处理器**式
+
+导入实现了BeanDefinitionRegistryPostProcessor接口的类，在该类里，通过BeanDefinition的注册器注册实名bean，**实现对容器中bean的最终裁定**
+
+例如：
+
+```java
+public class MyPostProcessor implements BeanDefinitionRegistryPostProcessor {
+    @Override
+    public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
+        BeanDefinition beanDefinition = BeanDefinitionBuilder.rootBeanDefinition(BookServiceImpl4.class).getBeanDefinition();
+        registry.registerBeanDefinition("bookService",beanDefinition);//如果存在重名的bean，这里的后处理器里的定义为最终效果
+    }
+
+    @Override
+    public void postProcessBeanFactory(ConfigurableListableBeanFactory configurableListableBeanFactory) throws BeansException {
+
+    }
+}
+```
+
+
+
+
+
+
+
+## bean的加载控制
+
+> 指根据特定情况对bean进行选择性加载以达到适用于项目的目标
+
+
+
+也就是可以条件式的编程控制bean的加载，那么bean的加载方式中，（五）~（八）的方式都可以
+
+**编程式的控制**：根据任意条件确认是否加载bean
+
+例如：用ImportSelector接口
+
+```java
+public class MyImportSelector implements ImportSelector {
+    @Override
+    public String[] selectImports(AnnotationMetadata annotationMetadata) {
+        Class<?> aClass = null;
+        try {
+            aClass = Class.forName("com.wyh.bean.Mouse");//意为如果环境中有Mouse这个类，那么就加载一个Cat的bean
+            if (aClass != null) {
+                return new String[]{"com.wyh.bean.Cat"};
+            }
+        } catch (ClassNotFoundException e) {
+            return new String[0];
+        }
+
+        return null;
+    }
+}
+```
+
+
+
+编程式代码庞大，所以有优化
+
+**注解式的控制**：在自定义的bean的上方加上**@Conditional**的注解，但由于**原生@Conditional注解复杂**，所以**SpringBoot衍生出了许多@Conditional的衍生注解，可以直接按注解判断条件**
+
+例如：
+
+以方法返回值作bean的控制：
+
+```java
+@Import({Mouse.class, Dog.class})
+public class SpringConfig {
+    @Bean
+    //@ConditionalOnClass(name = "com.wyh.bean.Mouse")//环境中有Mouse这个类就加载这个bean
+    //@ConditionalOnMissingClass("com.wyh.bean.Mouse")//环境中没有Mouse这个类就加载这个bean
+    //@ConditionalOnMissingBean(name = "com.wyh.bean.Dog")//环境中没有Dog这个bean就加载这个bean
+    @ConditionalOnBean(name = "Jerry")//环境中有Mouse这个bean就加载这个bean
+    @ConditionalOnWebApplication//以web形式加载时加载bean
+    //@ConditionalOnNotWebApplication//以非web形式加载时加载bean
+    public Cat tom() {//有多个Conditional时得都满足才会加载这个bean
+        return new Cat();
+    }
+}
+```
+
+直接自定义bean的控制：
+
+```java
+@Component("Tom")
+//@ConditionalOnClass(name = "com.wyh.bean.Mouse")//环境中有Mouse这个类就加载这个bean
+//@ConditionalOnMissingClass("com.wyh.bean.Mouse")//环境中没有Mouse这个类就加载这个bean
+//@ConditionalOnMissingBean(name = "com.wyh.bean.Dog")//环境中没有Dog这个bean就加载这个bean
+@ConditionalOnBean(name = "Jerry")//环境中有Mouse这个bean就加载这个bean
+//@ConditionalOnWebApplication//以web形式加载时加载bean
+@ConditionalOnNotWebApplication//以非web形式加载时加载bean
+public class Cat {
+}
+```
+
+```java
+@ComponentScan("com.wyh.bean")//需要扫描自定义bean的包
+public class SpringConfig {
+}
+```
+
+匹配指定环境再加载bean：
+
+```java
+public class SpringConfig {
+    @Bean
+    @ConditionalOnClass(name = "com.mysql.jdbc.Driver")//如果连接了数据库就加载Druid数据源
+    public DruidDataSource dataSource() {
+        return new DruidDataSource();
+    }
+}
+```
+
+
+
+
+
+
+
+## bean依赖属性配置
+
+
+
+我们可以将业务功能bean在运行时需要的资源抽取出来，创建为一个独立的**属性类（也就是XxxxProperties类），专门用于读取配置文件信息**
+
+那么这个业务功能bean就不需要添加@Component或者@ConfigurationProperties之类的注解了，在启动类上直接用@Import导入这个业务bean，解耦合
+
+业务bean的属性可以设定为默认值，当需要时可以设置通过配置文件传递属性，而业务bean通常要避免被强制加载，应该是根据需要导入
+
+例如：
+
+用于读取配置文件信息的属性类
+
+```java
+@ConfigurationProperties(prefix = "cartoon")
+@Data//为cat和mouse提供get/set方法，不然配置文件内的属性没办法注入到这里面
+public class CartoonProperties {
+    private Cat cat;
+    private Mouse mouse;
+}
+```
+
+将这个属性类的信息用于业务bean
+
+```java
+@EnableConfigurationProperties(CartoonProperties.class)//这个注解将添加了@ConfigurationProperties的类归为bean
+public class CartoonCatAndMouse {
+    private Cat cat;
+    private Mouse mouse;
+    private CartoonProperties cartoonProperties;
+
+    public CartoonCatAndMouse(CartoonProperties cartoonProperties) {
+        this.cartoonProperties = cartoonProperties;
+        cat = new Cat();
+        cat.setName(cartoonProperties.getCat() != null && StringUtils.hasText(cartoonProperties.getCat().getName()) ? cartoonProperties.getCat().getName() : "tom");//这里就是有配置文件信息就用配置文件的，没有就用默认的
+        cat.setAge(cartoonProperties.getCat() != null && cartoonProperties.getCat().getAge() != null ? cartoonProperties.getCat().getAge() : 20);
+        mouse = new Mouse();
+        mouse.setName("jerry");
+        mouse.setAge(3);
+    }
+
+    public void play() {
+        System.out.println("this is a cartoon");
+        System.out.println(cat.getAge()+"岁的"+cat.getName()+"和"+mouse.getAge()+"岁的"+mouse.getName()+"在追逐嬉戏");
+    }
+}
+```
+
+启动类上只需要导入这个业务bean
+
+```java
+@SpringBootApplication
+@Import(CartoonCatAndMouse.class)
+public class SpringBoot23BeanPropertiesApplication {
+
+    public static void main(String[] args) {
+        ConfigurableApplicationContext context = SpringApplication.run(SpringBoot23BeanPropertiesApplication.class, args);
+        CartoonCatAndMouse cartoonCatAndMouse = context.getBean(CartoonCatAndMouse.class);
+        cartoonCatAndMouse.play();
+    }
+}
+```
+
+
+
+
+
+
+
+## 自动配置原理
+
+
+
+自动配置思想：
+
+1. 收集Spring开发者的编程习惯，整理开发过程中使用的**常用技术列表** --> （**技术集A**）
+2. 收集常用技术（技术集A）的使用参数，整理开发过程中每个技术的**常用设置列表** --> （**设置集B**）
+3. 初始化SpringBoot的基础环境，加载用户自定义的bean和导入的其他依赖，形成**初始化环境**
+4. 将**技术集A**包含的所有技术都定义出来，在Spring/SpringBoot**启动时默认全部加载**
+5. 将**技术集A**中具有使用条件的技术约定出来，设置成按条件加载，由开发者决定是否使用该技术（与初始化环境比对）
+6. 将**设置集B**作为**默认配置加载**（约定大于配置），减少开发者的配置工作量
+7. 开放**设置集B**的**配置覆盖接口**，由开发者根据自身需要决定是否覆盖默认配置
+
+
+
+也就是，先把所有的技术实现出来，然后**默认全部加载，然后去检查条件，满足条件的加载，不满足的不加载**
+
+
+
+对于@SpringBootApplication注解：
+
+```java
+/* 主要由以下三个注解，各个注解又下分几个注解
+ *
+ * @SpringBootConfiguration
+ *     -> @Configuration
+ *          --> @Component
+ *     -> @Indexed
+ * @EnableAutoConfiguration  :这就是关于自动配置的注解
+ *     -> @AutoConfigurationPackage
+ *          --> @Import({AutoConfigurationPackages.Registrar.class}) :设置当前配置所在的包为扫描包，后续针对当前包进行扫描
+ *     -> @Import({AutoConfigurationImportSelector.class}) :
+ * @ComponentScan(
+ *     excludeFilters = {
+ *      @Filter(type = FilterType.CUSTOM,classes = {TypeExcludeFilter.class}),
+ *      @Filter(type = FilterType.CUSTOM,classes = {AutoConfigurationExcludeFilter.class})})
+ */
+```
+
+
+
+例如SpringBoot源码中：
+
+```java
+Enumeration<URL> urls = classLoader.getResources("META-INF/spring.factories");
+```
+
+就是将spring.factories文件中的所有与autoconfig相关的配置全部加载，一共130项
+
+
+
+ApplicationContextAware：
+
+* 对于实现了这个接口的类，可以在该类中调用Spring的上下文对象
+
+【注】对于XxxAware，都是差不多这样的功能
+
+
+
+* 先开发若干技术的标准实现
+* SpringBoot启动时加载所有的技术实现对应的自动配置类
+* 检测每个配置类的加载条件是否满足并进行对应的初始化
+* 是先加载所有的外部资源，然后根据外部资源进行条件对比
+
+
+
+
+
+## 变更自动配置
+
+
+
+**添加自定义的自动配置**：
+
+1. 首先你得拥有自动配置类：
+
+   例如：
+
+   ```java
+   @EnableConfigurationProperties(CartoonProperties.class)
+   @ConditionalOnClass(name = "org.springframework.data.redis.core.RedisOperations")//当加载了Redis的依赖坐标，那么就加载这个自动配置类
+   public class CartoonCatAndMouse implements ApplicationContextAware {
+       private Cat cat;
+       private Mouse mouse;
+       private CartoonProperties cartoonProperties;
+   
+       public CartoonCatAndMouse(CartoonProperties cartoonProperties) {
+           this.cartoonProperties = cartoonProperties;
+           cat = new Cat();
+           cat.setName(cartoonProperties.getCat() != null && StringUtils.hasText(cartoonProperties.getCat().getName()) ? cartoonProperties.getCat().getName() : "tom");
+           cat.setAge(cartoonProperties.getCat() != null && cartoonProperties.getCat().getAge() != null ? cartoonProperties.getCat().getAge() : 20);
+           mouse = new Mouse();
+           mouse.setName("jerry");
+           mouse.setAge(3);
+       }
+   
+       public void play() {
+           System.out.println("this is a cartoon");
+           System.out.println(cat.getAge()+"岁的"+cat.getName()+"和"+mouse.getAge()+"岁的"+mouse.getName()+"在追逐嬉戏");
+           System.out.println("then, I get the BeanContext,so, I will display the Bean's id");
+           for (String beanDefinitionName : applicationContext.getBeanDefinitionNames()) {
+               System.out.println(beanDefinitionName);
+           }
+   
+       }
+   
+       private ApplicationContext applicationContext;
+   
+       @Override
+       public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+           this.applicationContext = applicationContext;
+       }
+   }
+   ```
+
+   ```java
+   @ConfigurationProperties(prefix = "cartoon")
+   @Data//为cat和mouse提供get/set方法，不然配置文件内的属性没办法注入到这里面
+   public class CartoonProperties {
+       private Cat cat;
+       private Mouse mouse;
+   }
+   ```
+
+2. 在**resource**目录下创建**META-INF目录**，再创建**spring.factories**文件
+
+   spring.factories文件的大致内容为：
+
+   ```properties
+   # Auto Configure
+   org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+     com.wyh.bean.CartoonCatAndMouse  ##指定自动配置类的全路径名
+   ```
+
+那么，就算启动类没有导入这个自动配置类，也会自动加载上（**只要符合自动配置类的加载条件**）
+
+
+
+**排除自动配置**：
+
+**application.yml文件中**配置排除自动配置
+
+例如：
+
+```yml
+spring:
+  autoconfigure:
+    exclude:
+    - org.springframework.boot.autoconfigure.task.TaskExecutionAutoConfiguration
+    - org.springframework.boot.autoconfigure.Xxxxx
+```
+
+或者直接**在@SpringBootApplication注解上的excludeName属性或exclude属性中**配置排除
+
+例如：
+
+```java
+@SpringBootApplication(excludeName = {"org.springframework.boot.autoconfigure.context.LifecycleAutoConfiguration"})
+public class SpringBoot23BeanPropertiesApplication {}
+```
+
+
+
+有一些得在Maven的pom文件中设置排除依赖才可以排除掉自动配置
+
+比如排除内嵌的Tomcat服务器：（排除掉了tomcat记得加上jetty）
+
+```xml
+<dependency>
+	<groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+    <exclusions><!--排除依赖-->
+    	<exclusion><!--具体排除的依赖-->
+        	<groupId>org.springframework.boot</groupId>
+   		 	<artifactId>spring-boot-starter-tomcat</artifactId>
+        </exclusion>
+    </exclusions>
+</dependency>
+```
+
+
+
+
+
+
+
+# 自定义starter💡
+
+> 由案例引出自定义starter
+
+
+
+**案例：统计独立IP访问次数**
+
+在导入了对应的starter之后，可以做到：
+
+* 每次访问网站行为均进行统计
+* 后台每十秒输出一次监控信息（格式为：IP+访问次数）
+
+
+
+案例需求分析：
+
+1. 数据记录位置：Map/Redis
+2. 功能触发位置：每次Web请求（拦截器）
+   * 步骤一：从简单起手，主动调用，仅统计单一操作访问次数（例如查询）
+   * 步骤二：开发拦截器
+3. 业务数据（配置项）
+   * 输出频度，默认为10秒
+   * 数据特征：累计数据/阶段数据，默认为累计数据
+   * 输出格式：详细模式/极简模式
+
+
+
+
+
+**自定义starter**
+
+starter名称定义：
+
+* 技术名-spring-boot-starter（第三方技术）
+* spring-boot-starter-技术名（官方制作的技术的命名）
+
+starter模块定义：
+
+* 一个starter的空壳模块，只有pom文件，另一个是META-INF+Autoconfiguration配置类的模块
+* 或者一个模块全包含
+
+
+
+使用一个模块格式：
+
+1. 创建模块：技术名-spring-boot-starter
+
+2. 勾选web技术：spring-boot-starter-web
+
+3. 定义技术业务功能：
+
+   例如：
+
+   ```java
+   public class IpCountService {
+       private final Map<String,Integer> ipCountMap = new HashMap<>();//数据存储的地方
+       private final HttpServletRequest httpServletRequest;//获取访问请求对象
+   
+       @Autowired
+       public IpCountService(HttpServletRequest httpServletRequest) {
+           this.httpServletRequest = httpServletRequest;
+       }
+   
+       /**
+        * @author iWyh2
+        * @date [2022/12/6 0006 21:42]
+        * @description 每次调用给这个方法，就记录IP和累加访问次数
+        */
+       public void count() {
+           //1.获取访问ip
+           String ip = httpServletRequest.getRemoteAddr();
+           System.out.println("===一次IP统计:"+ip+"===");
+           //2.根据ip从map中找值并累加
+           if (ipCountMap.containsKey(ip)) {
+               ipCountMap.put(ip,ipCountMap.get(ip) + 1);
+           } else {
+               ipCountMap.put(ip,1);
+           }
+       }
+   }
+   ```
+
+4. 定义自动配置类，自动配置类的作用为将业务bean导入Spring容器
+
+   例如：
+
+   ```java
+   @Import(IpCountService.class)
+   public class IpAutoConfiguration {
+   }
+   ```
+
+5. 定义自动配置类被自动加载的配置文件，在resource目录下，创建META-INF/spring.factories
+
+   例如：
+
+   ```properties
+   # Auto Configure
+   org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+     com.wyh.autoconfig.IpAutoConfiguration
+   ```
+
+这样，自定义starter初级版就做好了（其实此时自定义starter就已经算是做完了，后面的都只算是完善）
+
+然后我们只需要导入这个自定义starter，注入ipCountService业务对象调用count方法即可
+
+【注】在导入自定义starter之前，需要我们先将自定义starter模块**clean**，再**install**到本地maven仓库
+
+
+
+
+
+**辅助功能开发**
+
+
+
+**定时展示**：
+
+初级版自定义starter只是做到了记录存储访问次数的数据，现在需要将存储的数据展示出来（这与自定义starter毫无关系）
+
+实现：利用定时任务技术做到每十秒展示访问次数数据 - SpringTask
+
+```java
+@Scheduled(cron = "0/5 * * * * ?")
+public void print() {
+    System.out.println("        IP访问监控");
+    System.out.println("+-----ip-address-----+--num--+");
+
+    for (Map.Entry<String, Integer> entry : ipCountMap.entrySet()) {
+        String key = entry.getKey();
+        Integer value = entry.getValue();
+        System.out.printf("|%18s  |%5d  |\n", key, value);
+    }
+    System.out.println("+--------------------+-------+");
+}
+```
+
+【注】这里所用的printf方法，和C语言的printf一样的用法，格式化输出字符串
+
+还需要开启Spring内置的任务技术：使用@EnableScheduling注解
+
+```java
+@Import(IpCountService.class)
+@EnableScheduling
+public class IpAutoConfiguration {
+}
+```
+
+开启任务功能的地方必须是整个应用的核心地方，显然这个自动配置类是核心被加载的类
+
+
+
+**配置属性**：
+
+对于一个技术，我们应该允许用户在yml配置文件中配置我们技术的属性，做到自定义功能或切换
+
+那么读取配置文件中的配置信息，我们需要一个属性类，并拥有默认的配置属性：
+
+```java
+@ConfigurationProperties(prefix = "wyh-tools.ip")//如果应用中的配置文件配了自定义属性，那么就读取并覆盖掉下面的默认值
+@Data//提供getter和setter方法，这样才能读取并覆盖
+public class IpProperties {
+    /*日志的显示周期*/
+    private Long cycle = 5L;
+    /*是否周期内重置数据*/
+    private Boolean cycleReset = false;
+    /*日志的输出模式，明细-detail，简单-simple*/
+    private String model = LogModel.DETAIL.value;
+    public enum LogModel {
+        DETAIL("detail"),
+        SIMPLE("simple");
+        private String value;
+        LogModel(String value) {
+            this.value = value;
+        }
+        public String getValue() {
+            return value;
+        }
+    }
+}
+```
+
+要使其生效，我们需要将这个属性类设置为bean，使用@EnableConfigurationProperties即可：
+
+```java
+@Import(IpCountService.class)
+@EnableScheduling
+@EnableConfigurationProperties(IpProperties.class)
+public class IpAutoConfiguration {
+}
+```
+
+丰富业务展示数据功能：
+
+```java
+@Autowired
+    private IpProperties ipProperties;//读取应用中配置文件中的配置信息
+
+    @Scheduled(cron = "0/5 * * * * ?")
+    public void print() {
+        //根据设置的是simple还是detail切换
+        if (ipProperties.getModel().equals(IpProperties.LogModel.DETAIL.getValue())) {
+            System.out.println("        IP访问监控");
+            System.out.println("+-----ip-address-----+--num--+");
+            for (Map.Entry<String, Integer> entry : ipCountMap.entrySet()) {
+                System.out.printf("|%18s  |%5d  |\n", entry.getKey(), entry.getValue());
+            }
+            System.out.println("+--------------------+-------+");
+        } else if (ipProperties.getModel().equals(IpProperties.LogModel.SIMPLE.getValue())){
+            System.out.println("       IP访问监控");
+            System.out.println("+-----ip-address-----+");
+            for (String  key : ipCountMap.keySet()) {
+                System.out.printf("|%18s  |\n", key);
+            }
+            System.out.println("+--------------------+");
+        }
+
+        if (ipProperties.getCycleReset()) {//如果设置的为true，则每次打印完就重置
+            ipCountMap.clear();
+        }
+    }
+```
+
+定义好供属性类读取的属性：
+
+```yml
+#ip config：自定义starter
+wyh-tools:
+  ip:
+    cycle: 10L
+    cycleReset: true
+    model: simple
+```
+
+
+
+**改变定时任务的周期时间属性**：
+
+对于配置文件中配置周期使其生效比较复杂
+
+我们需要将属性类自定义成bean，并自定义名称
+
+```java
+@ConfigurationProperties(prefix = "wyh-tools.ip")//@EnableEnableConfigurationProperties会在此处生成bean的id
+@Component("ipProperties")//自定义bean的名称
+public class IpProperties {}
+```
+
+接着我们需要放弃使用@EnableEnableConfigurationProperties来将属性类设置为bean，因为它生成的bean的id名称很麻烦，不符合EL表达式的需要
+
+```java
+@Import({IpCountService.class,IpProperties.class})//用Import导入自定义bean，这样bean的id才是我们自定义的（手工控制）
+@EnableScheduling
+//@EnableConfigurationProperties(IpProperties.class)
+public class IpAutoConfiguration {
+}
+```
+
+最后我们在定时任务的cron表达式上使用EL表达式读取配置文件中的对应配置信息，格式为：**#{bean的id名.属性名称}**
+
+```java
+@Scheduled(cron = "0/#{ipProperties.cycle} * * * * ?")
+public void print() {}
+```
+
+
+
+**拦截器**：
+
+ip访问统计逐个在方法里调用肯定不行，所以我们需要用拦截器来拦截请求去统计
+
+创建拦截器
+
+```java
+public class IpCountInterceptor implements HandlerInterceptor {
+    @Autowired
+    private IpCountService ipCountService;
+
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        ipCountService.count();
+        return true;
+    }
+}
+```
+
+让拦截器生效，设置SpringMVC的配置类，加载拦截器
+
+```java
+@Configuration(proxyBeanMethods = true)
+public class SpringMvcConfig implements WebMvcConfigurer {
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        //用方法获取拦截器对象bean，@Configuration保证获取的拦截器是唯一的
+        registry.addInterceptor(ipCountInterceptor()).addPathPatterns("/**");//拦截所有的请求路径
+    }
+
+    @Bean//将拦截器设置为bean
+    public IpCountInterceptor ipCountInterceptor() {
+        return new IpCountInterceptor();
+    }
+}
+```
+
+
+
+**YAML提示功能开发**：
+
+1. 首先导入一个配置处理器坐标：
+
+   ```xml
+   <dependency>
+   	<groupId>org.springframework.boot</groupId>
+   	<artifactId>spring-boot-configuration-processor</artifactId>
+       <optional>true</optional><!--防止向下传递-->
+   </dependency>-->
+   ```
+
+2. 然后我们clean再install
+
+3. 在target目录下找到META-INF目录，取出里面的**spring-configuration-metadata.json**文件，复制粘贴到自定义starter模块下的META-INF目录中
+
+4. 在spring-configuration-metadata.json文件中做需要的提示配置
+
+   例如这个自定义starter的提示文件：
+
+   ```json
+   {
+     "groups": [
+       {
+         "name": "wyh-tools.ip",
+         "type": "com.wyh.properties.IpProperties",
+         "sourceType": "com.wyh.properties.IpProperties"
+       }
+     ],
+     "properties": [
+       {
+         "name": "wyh-tools.ip.cycle",
+         "type": "java.lang.Long",
+         "description": "日志的显示周期",//这里的描述提示，一般会来自你在属性类的属性上写的注释文档内容
+         "sourceType": "com.wyh.properties.IpProperties"
+       },
+       {
+         "name": "wyh-tools.ip.cycle-reset",
+         "type": "java.lang.Boolean",
+         "description": "是否周期内重置数据",
+         "sourceType": "com.wyh.properties.IpProperties"
+       },
+       {
+         "name": "wyh-tools.ip.model",
+         "type": "java.lang.String",
+         "description": "日志的输出模式，明细-detail，简单-simple",
+         "sourceType": "com.wyh.properties.IpProperties"
+       }
+     ],
+     "hints": [//具体给哪个属性提示值，且提示的是具体什么值
+       {
+         "name": "wyh-tools.ip.model",
+         "values": [
+           {
+             "value": "detail",
+             "description": "详细模式."
+           },
+           {
+             "value": "simple",
+             "description": "简略模式."
+           }
+         ]
+       }
+     ]
+   }
+   ```
+
+   【注】这里的描述提示，一般会来自你在属性类的属性上写的注释文档内容
+
+5. 最后为了防止提示出来的东西有两份，所以在重新clean-install时需要解除掉一开始导入的依赖
+
+
+
+
+
+
+
+# 核心原理📌
+
+
+
+## SpringBoot启动流程
+
+
+
+1. **初始化各种属性，加载成对象**
+   * 读取环境属性（Environment）
+   * 系统配置（spring.factories）
+   * 参数（Arguments、application.properties/yml）
+2. 在**创建容器之前**，通过**监听机制**，应对不同阶段的加载数据，更新数据的需求
+3. **创建Spring容器**对象ApplicationContext，**加载各种配置**
+4. 在**容器初始化过程中**，追加各种功能（例如统计时间，输出日志等）
+
+
+
+以一个空壳SpringBoot程序为例，研究源码：（大致过程）
+
+```java
+/*
+##SpringBoot应用的开始（引导类执行run方法）
+SpringBoot24StartupApplication类 [10行] -> SpringApplication.run(SpringBoot24StartupApplication.class, args);
+    =>SpringApplication类 [825行] -> return run(new Class[]{primarySource}, args);
+        =>SpringApplication类 [829行] -> return (new SpringApplication(primarySources)).run(args);
+            ##加载各种配置信息，初始化各种配置对象
+            =>SpringApplication类 [829行] -> new SpringApplication(primarySources)
+                =>SpringApplication类 [101行] -> this((ResourceLoader)null, primarySources);
+                    =>SpringApplication类 [104行] -> public SpringApplication(ResourceLoader resourceLoader, Class<?>... primarySources) {}
+                        ##初始化资源加载器
+                        =>SpringApplication类 [117行] -> this.resourceLoader = resourceLoader;
+                        ##初始化配置类的类名信息（格式转换，信息未变）
+                        =>SpringApplication类 [119行] -> this.primarySources = new LinkedHashSet(Arrays.asList(primarySources));
+                        ##确认当前容器加载的类型（是否是web环境）
+                        =>SpringApplication类 [120行] -> this.webApplicationType = WebApplicationType.deduceFromClasspath();
+                        ##获取系统配置引导信息（spring.factories）
+                        =>SpringApplication类 [121行] -> this.bootstrapRegistryInitializers = this.getBootstrapRegistryInitializersFromSpringFactories();
+                        ##获取ApplicationContextInitializer.class对应的实例
+                        =>SpringApplication类 [122行] -> this.setInitializers(this.getSpringFactoriesInstances(ApplicationContextInitializer.class));
+                        ##初始化监听器（获取ApplicationListener.class对应的实例）对初始化过程及运行过程进行干预
+                        =>SpringApplication类 [123行] -> this.setListeners(this.getSpringFactoriesInstances(ApplicationListener.class));
+                        ##初始化整个应用的引导类类名信息，以备用
+                        =>SpringApplication类 [124行] -> this.mainApplicationClass = this.deduceMainApplicationClass();
+            ##初始化容器，获取ApplicationContext对象
+            =>SpringApplication类 [829行] -> (new SpringApplication(primarySources)).run(args);
+                =>SpringApplication类 [154行] -> (public ConfigurableApplicationContext run(String... args) {}
+                    ##设置计时器
+                    =>SpringApplication类 [155行] -> StopWatch stopWatch = new StopWatch();
+                    ##开始计时
+                    =>SpringApplication类 [156行] -> stopWatch.start();
+                    ##创建系统引导信息对应的上下文对象
+                    =>SpringApplication类 [157行] -> DefaultBootstrapContext bootstrapContext = this.createBootstrapContext();
+                    ##模拟输入输出信号，避免出现因缺少外设导致的信号传输失败，进而引发错误（模拟显示器，键盘，鼠标...）：java.awt.headless=true 也就是做设备的兼容
+                    =>SpringApplication类 [159行] -> this.configureHeadlessProperty();
+                    ##获取当前注册的所有监听器
+                    =>SpringApplication类 [160行] -> SpringApplicationRunListeners listeners = this.getRunListeners(args);
+                    ##监听器执行了对应的操作步骤
+                    =>SpringApplication类 [161行] -> listeners.starting(bootstrapContext, this.mainApplicationClass);
+                    ##获取传入应用的命令行参数args
+                    =>SpringApplication类 [164行] -> ApplicationArguments applicationArguments = new DefaultApplicationArguments(args);
+                    ##将前期读取的数据信息加载成了一个环境对象，用来描述信息
+                    =>SpringApplication类 [165行] -> ConfigurableEnvironment environment = this.prepareEnvironment(listeners, bootstrapContext, applicationArguments);
+                    ##做了一个配置用以备用
+                    =>SpringApplication类 [166行] -> this.configureIgnoreBeanInfo(environment);
+                    ##初始化打印SpringBoot的banner
+                    =>SpringApplication类 [167行] -> Banner printedBanner = this.printBanner(environment);
+                    ##创建容器对象，根据前期配置的容器类型进行判定并创建
+       *最重要的一步* =>SpringApplication类 [168行] -> context = this.createApplicationContext();
+                    ##设置启动模式
+                    =>SpringApplication类 [169行] -> context.setApplicationStartup(this.applicationStartup);
+                    ##对容器进行设置，参数来源于前期的设定
+                    =>SpringApplication类 [170行] -> this.prepareContext(bootstrapContext, context, environment, listeners, applicationArguments, printedBanner);
+                    ##刷新容器环境
+                    =>SpringApplication类 [171行] -> this.refreshContext(context);
+                    ##刷新完毕之后的后处理
+                    =>SpringApplication类 [172行] -> this.afterRefresh(context, applicationArguments);
+                    ##停止计时
+                    =>SpringApplication类 [173行] -> stopWatch.stop();
+                    ##判定是否记录启动时间的日志
+                    =>SpringApplication类 [174行] -> if (this.logStartupInfo)
+                    ##创建日志对应的对象，输出日志信息，包含启动时间信息
+                    =>SpringApplication类 [175行] -> new StartupInfoLogger(this.mainApplicationClass).logStarted(this.getApplicationLog(), stopWatch);
+                    ##监听器执行了对应的操作步骤
+                    =>SpringApplication类 [178行] -> listeners.started(context);
+                    ##调用运行器执行操作
+                    =>SpringApplication类 [179行] -> this.callRunners(context, applicationArguments);
+                    ##监听器执行了对应的操作步骤
+                    =>SpringApplication类 [186行] -> listeners.running(context);
+*/
+```
+
+
+
+
+
+## 监听器
+
+> 监听器是Spring一个很重要的机制
+>
+> 它为我们提供了干涉各阶段的数据处理的接口
+
+
+
+监听器类型：
+
+* 在应用运行但未进行任何处理时，将发送ApplicationStartingEvent
+* 当Environment被使用，且上下文对象创建之前，将发送ApplicationEnvironmentPreparedEvent
+* 在开始刷新之前，bean定义被加载发送之后，发送ApplicationPreparedEvent
+* 在上下文对象刷新之后且所有的应用和命令行运行器被调用之前发送ApplicationStartedEvent
+* 在应用程序和命令行运行器被调用之后，将发出ApplicationReadyEvent，用于通知应用已经准备处理请求
+* 启动时发生异常，将发送ApplicationFailedEvent
+
+
+
+> ©iWyh2
