@@ -98,11 +98,7 @@ IDE：VSCode/GoLand
 
 # Golang新奇语法
 
-
-
 ## 语法入门
-
-
 
 go run 表示 直接编译go语言并执行应用程序，一步完成
 
@@ -141,11 +137,268 @@ func main () {//函数的{必须和函数名在同一行
 
 
 
+## 变量
+
+**变量的申明**：
+
+声明变量的一般形式是使用 **var 关键字**
+
+例如：
+
+```go
+/*
+四种变量的声明方式
+*/
+package main
+
+import "fmt"
+
+/*
+	声明全局变量时，方法一、二、三没有区别 都是可以的
+	但是方法四的(:=)不支持声明全局变量
+*/
+var glob_a int = 50
+var glob_b int
+var glob_c string = "iWyh2"
+
+
+func main() {
+	//方法一: 声明一个变量 默认值为0
+	var a int
+	fmt.Println("a = ", a)
+
+	//默认值为空
+	var as string
+	fmt.Println("as = ", as)
+
+	//方法二: 声明一个变量 声明的同时进行初始化
+	var b int = 50
+	fmt.Println("b = ", b)
+
+	//方法三: 声明一个变量并对其进行初始化时 省去变量的数据类型 通过初始化值自动匹配当前变量的数据类型
+	var c = 100
+	fmt.Printf("type of c is %T\n", c)//格式化输出 输出当前变量的数据类型用%T
+	fmt.Println("c = ", c)
+
+	//方法四: 省去var关键字 直接自动匹配进行声明并初始化赋值 - 常用这种方法 (但不支持声明全局变量 只适合在方法体内进行使用)
+	d := 100
+	fmt.Printf("type of d is %T\n", d)//格式化输出 输出当前变量的数据类型用%T
+	fmt.Println("d = ", d)
+
+	//输出全局变量
+	fmt.Printf("全局变量a, b, c为: %d %d %s\n", glob_a, glob_b, glob_c)
+
+	//多变量声明 - 方式一: 一行书写
+	var x, y int = 10, 20//相同类型
+	var z, w = 0, "wang"//不同类型 自动匹配
+	fmt.Println("x = ", x, "y = ", y)//可以多字符串拼接式输出
+	fmt.Println("z = ", z, "w = ", w)
+
+	//多变量声明 - 方式二: 多行书写 (一般适用于多且 不同变量类型 时) 也可以适用于全局变量的书写
+	var (
+		xx int
+		yy bool = false
+		zz string = ""
+	)
+	fmt.Println("xx = ", xx,"yy = ", yy,"zz = ", zz)
+}
+```
+
+
+
+* 第一种，指定变量类型，声明后若不赋值，使用默认值
+* 第二种，根据值自行判定变量类型
+* 第三种，省略var, 注意 :=左侧的变量不应该是已经声明过的，否则会导致编译错误，可以叫 -> 声明初始化
+
+
+
+
+
+## 常量
+
+常量是一个简单值的标识符，在程序运行时，不会被修改的量。
+
+常量中的数据类型只可以是：
+
+* 布尔型
+* 数字型（整数型、浮点型和复数）
+* 字符串型
+
+常量的定义格式：
+
+```go
+const identifier [type] = value
+```
+
+【注】可以省略类型说明符 [type]，因为编译器可以根据变量的值来推断其类型
+
+
+
+const还可以定义**枚举**，也就是多个常量的定义。**枚举必须赋值**
+
+```go
+const(
+	Spring = 1
+	Summer = 2
+	Autumn = 3
+	Winter = 4
+)
+```
+
+常量可以用len(), cap(), unsafe.Sizeof()常量计算表达式的值
+
+：常量表达式中，函数必须是内置函数，否则编译不过
+
+```go
+import "unsafe"
+const (
+    a = "abc"
+    b = len(a)
+    c = unsafe.Sizeof(a)
+)
+```
+
+【注】**字符串**类型在 go 里**是个结构**, 包含指向底层数组的**指针和长度**,这两部分每部分**都是 8 个字节**，所以**字符串类型大小为 16 个字节**
+
+
+
+**iota关键字**只用于const()中
+
+
+
+例子：
+
+```
+package main
+
+import "fmt"
+
+/*
+	const可以定义枚举类型 (枚举必须赋值) : 也就是多个常量定义
+	
+	在定义枚举时 可以使用关键字: iota
+	第一行的iota值默认为0 iota在每一行都会累加1
+	iota只能在const()中使用
+*/
+const(
+	Spring = iota//此时 Spring = 0
+	Summer//此时 Summer = 1
+	Autumn//此时 Autumn = 2
+	Winter//此时 Winter = 3
+)
+
+/*
+	多个常量可以放在同一行
+	枚举第一行的iota值默认为0
+	iota还可以用在表达式中
+*/
+const(
+	dog, cat = iota * 10, iota * 20//此时 dog = 0  cat = 0
+	pig, kit//此时 pig = 10 kit = 20
+	tgr, lon = iota * 10 + 5, iota * 20 + 10//此时 tgr = 25  lon = 50
+)
+
+func main() {
+	//常量定义
+	const length int = 10//只读
+	//length = 20 is not allowed :-> 常量是不允许再被修改的
+
+	//打印常量
+	fmt.Println("Spring = ", Spring)
+	fmt.Println("Summer = ", Summer)
+	fmt.Println("Autumn = ", Autumn)
+	fmt.Println("Winter = ", Winter)
+	//打印常量
+	fmt.Println("dog = ", dog, "cat = ", cat)
+	fmt.Println("pig = ", pig, "kit = ", kit)
+	fmt.Println("tgr = ", tgr, "lon = ", lon)
+}
+```
+
+
+
+
+
+
+
+
+
+
+
 ## 函数
 
-
-
 ### 多返回值
+
+话不多说，直接上例子：
+
+```go
+package main
+
+import "fmt"
+
+/*
+	Go的函数 参数类型放在变量名之后
+	返回值放在 ）与 { 之间
+*/
+
+//单个返回值
+func func1(a string, b int) int {
+	fmt.Println("a = ", a, "b = ", b)
+	c := 20
+	return c
+}
+
+/*
+	多返回值 - 用括号包裹起来
+	且还可以给返回值取名 未取名为匿名返回
+
+	取名的多返回值可以看成是函数的形参，在定义时就有了初始化值，比如int为0等
+	（Go的变量在定义时都有初始化值，防止野指针的出现）
+*/
+func func2(a int, b bool) (string, string) {
+	fmt.Println("a = ", a, "b = ", b)
+	return "iWyh2","20"
+}
+
+func func3(a int, b bool) (name string, age string) {
+	fmt.Println("a = ", a, "b = ", b)
+
+	//给有名称的返回值赋值
+	name = "iWyh2"
+	age = "20"
+
+	//直接返回就无须再手动返回值，由带名称的返回值直接返回
+	return
+}
+
+//多返回值类型相同时，类型可以放一起写
+func func4(a int, b bool) (name , age string) {
+	fmt.Println("a = ", a, "b = ", b)
+
+	//给有名称的返回值赋值
+	name = "iWyh2"
+	age = "20"
+
+	//直接返回就无须再手动返回值，由带名称的返回值直接返回
+	return
+}
+
+func main() {
+	a := func1("wyh", 20)
+	fmt.Println("main's a = ", a)
+
+	name, age := func2(20,true)
+	fmt.Println("name = ", name, "age = ", age)
+
+	name, age = func3(20,true)
+	fmt.Println("name = ", name, "age = ", age)
+
+	name, age = func4(20,true)
+	fmt.Println("name = ", name, "age = ", age)
+}
+```
+
+
 
 
 
