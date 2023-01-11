@@ -2109,3 +2109,154 @@ private transient String password;
 
 
 ## 32. Java的多线程
+
+线程（Thread）：是一个程序内部的一条执行路径
+
+main方法的执行就是一个单独的执行路径
+
+
+
+单线程：程序中只有一条执行路径
+
+**多线程：从软硬件上实现多条执行流程**
+
+
+
+**多线程的创建：**
+
+方式一：继承Thread类
+
+1. 定义一个子类（MyThread）**继承Thread，重写run方法**
+2. 创建MyThread类对象
+3. 用线程对象**调用start方法启动新线程**，执行run方法
+
+* 编码简单 但是无法扩展（因为单继承）
+* 直接调用run方法不会启动线程，只会当做一个方法执行
+* **别把主线程任务放在子线程启动之前**，会失去父子线程同时跑任务的效果
+* 线程有执行结果是无法直接返回的
+
+
+
+方式二：实现Runnable接口
+
+1. 定义一个线程任务类（MyRunnable）实现Runnable接口，重写run方法
+2. 创建线程任务类MyRunnable的任务对象（myRunnable）
+3. 将任务对象交给线程Thread的线程对象处理（new Thread(myRunnable).start()）（本身并不是线程对象，需要线程对象帮忙执行）
+4. 调用线程对象的start方法启动新线程，执行run方法
+
+* 实现接口，可以继续继承和实现更多接口，扩展性强
+
+* 但多了一层包装对象
+
+* 可以使用匿名内部类实现线程任务对象
+
+  * ```java
+    new Thread(new Runnable(){
+    	@Override
+        public void run() {
+            //子线程任务逻辑
+        }
+    }).start();
+    //----------or-------------
+    new Thread(() -> {
+            //子线程任务逻辑
+        }
+    }).start();
+    ```
+
+    
+
+* 线程有执行结果是无法直接返回的
+
+
+
+方式三：实现Callable接口 FutureTask接口（JDK 5.0新增）
+
+1. 定义任务类实现Callable接口，重写call方法，封装子线程任务（...implement Callable<T\> {}）（泛型为线程返回结果类型）
+2. 用FutureTask把Callable对象封装为线程任务对象（new FutureTask<T\> (new MyCallable())）（FutureTask为Runnable的子类）
+3. 将线程任务对象交给Thread处理（new Thread(MyFutureTask)）
+4. 调用Thread的start方法开启新线程，执行call方法
+5. 线程方法call执行完毕之后，通过FutureTask的get方法获取call方法的返回值（MyFutureTask.get()）
+
+* 适合需要返回线程执行结果的业务场景
+* 扩展性强
+* get获取 一定会等待线程执行完毕之后才会获取
+
+
+
+**Thread类的常用方法：**
+
+* getName()：获取线程名称
+* setName()：设置名称
+  * 或者构造器取名：new MyThread("xxx");（调用父类构造器super(name)）
+* Thread.currentThread()：获取当前线程对象（哪个线程执行它 就获取哪个线程对象）
+* Thread.sleep(3000)：线程休眠（单位为毫秒）
+* run：线程任务方法
+* start：启动线程
+
+
+
+**线程安全：**
+
+线程安全问题：**多个线程同时操作同一个共享资源**时可能会出现的业务安全问题
+
+-> 存在多线程并发 同时访问共享资源 修改共享资源
+
+
+
+**线程同步：**
+
+**线程通信：**
+
+**线程池：**
+
+**定时器：**
+
+**生命周期：**
+
+**并发：**
+
+**并行：**
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

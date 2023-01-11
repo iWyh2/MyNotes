@@ -268,7 +268,7 @@ const (
 
 例子：
 
-```
+```go
 package main
 
 import "fmt"
@@ -314,12 +314,6 @@ func main() {
 	fmt.Println("tgr = ", tgr, "lon = ", lon)
 }
 ```
-
-
-
-
-
-
 
 
 
@@ -402,19 +396,192 @@ func main() {
 
 
 
-### main函数和init函数
+### init函数
+
+main 函数只能在package main中
+
+**init 函数**可在package main中，可在其他package中，**可在同一个package中出现多次**
+
+**执行顺序**：
+
+golang里面有两个保留的函数：init函数（能够应用于所有的package）和main函数（只能应用于package main）。**这两个函数在定义时不能有任何的参数和返回值**
+
+虽然一个package里面可以写任意多个init函数，但这无论是对于可读性还是以后的可维护性来说，我们都强烈建议用户**在一个package中每个文件只写一个init函数**
+
+**go程序会自动调用init()和main()**，所以你不需要在任何地方调用这两个函数。每个package中的init函数都是可选的，但**package main就必须包含一个main函数**。
+
+**程序的初始化和执行都起始于main包**
+
+如果**main包还导入了其它的包，那么就会在编译时将它们依次导入**。有时一个包会被多个包同时导入，那么它只会被导入一次（例如很多包可能都会用到fmt包，但它只会被导入一次，因为没有必要导入多次）。
+
+当一个包被导入时，如果该包还导入了其它的包，那么会先将其它包导入进来，然后再对这些包中的包级常量和变量进行初始化，接着执行init函数（如果有的话），依次类推。
+
+等所有被导入的包都加载完毕了，就会开始对main包中的包级常量和变量进行初始化，然后执行main包中的init函数（如果存在的话），最后执行main函数。下图详细地解释了整个执行过程：
+
+![31-init.png](https://cdn.nlark.com/yuque/0/2022/png/26269664/1650528765014-63d3d631-428e-4468-bc95-40206d8cd252.png?x-oss-process=image%2Fresize%2Cw_750%2Climit_0)
+
+
+
+例子：
+
+例子结构：![image-20221228181129868](.\images\init.png)
+
+lib1包：lib1.go
+
+```go
+package lib1 //一个包对应一个文件夹（除了main包）
+
+import "fmt"
+
+//lib1中的API定义
+/*
+	go的函数的定义
+	函数名首字母大写为对外可访问 相当于 - public
+	首字母小写为对外不可访问 只有当前包内可调用 - private
+*/
+func Lib1TestAPI() {
+	fmt.Println("lib1's func")
+}
+
+
+func init() {
+	fmt.Println("lib1's initFunc is running...")
+}
+```
+
+lib2包：lib2.go
+
+```go
+package lib2
+
+import "fmt"
+
+//lib2中的API定义
+func Lib2TestAPI() {
+	fmt.Println("lib2's func")
+}
+
+
+func init() {
+	fmt.Println("lib2's initFunc is running...")
+}
+```
+
+main包：main.go
+
+```go
+package main
+
+import (
+	"GoStudy/Go-5-init/lib1" //需要写完整gopath的相对路径 不然会找不到包 之后会用mod解决 注意还要关闭go-module
+	"GoStudy/Go-5-init/lib2" //建议文件名不要带中文 会报奇奇怪怪的错
+)
+
+func main() {
+	lib1.Lib1TestAPI()
+	lib2.Lib2TestAPI()
+}
+```
+
+【注】Go的函数的定义：要注意区分函数名首字母的大小写（这是包访问权限的设置）
 
 
 
 
 
-## defer
+### import的使用方式
+
+直接看例子：
+
+```go
+package main
+
+import (
+	_ "GoStudy/Go-5-init/lib1"   //导入包并起别名 此处为匿名 - 也就是导入包使用包的init方法 但不使用当前包内的方法函数
+	wyh "GoStudy/Go-5-init/lib2" //导入包并起别名 此处为起别名 - 也就是正常导入并使用 只是用别名来调用了
+	//. "GoStudy/Go-5-init/lib2" //使导入的包可以直接调用API 而不是使用包名调用（但一般情况下不建议这样使用，防止两个包有同名函数）
+)
+
+
+
+func main() {
+	//lib1.Lib1TestAPI() 被匿名导入 无法调用包内的函数
+	wyh.Lib2TestAPI()
+}
+```
+
+* 匿名导入包（导入但不使用 防止报错）
+* 别名导入包（导入后用别名调用）
+* 直接导入包（正常使用）
 
 
 
 
 
 ## 指针
+
+学过C就会
+
+Go的指针定义:
+
+```go
+a := 2
+var p *int = &a
+fmt.Print(p)//a的内存地址
+fmt.Print(*p)//a的实际的值
+```
+
+
+
+例子：
+
+```go
+package main
+
+import (
+	"fmt"
+)
+
+/*
+	快速掌握指针的小例子 - 交换两个数据的值
+*/
+
+//按值传递
+func exchange(a int, b int) {
+   temp := a
+   a = b
+   b = temp
+}
+
+//按址传递
+func swap(pa *int, pb *int) {
+	temp := *pa
+	*pa = *pb
+	*pb = temp
+}
+
+func main() {
+	value1 := 10
+	value2 := 100
+
+	exchange(value1,value2)//没有成功交换值
+	fmt.Println("After exchange: value1 = ",value1,"value2 = ",value2)
+
+	swap(&value1, &value2)
+	fmt.Println("After swap: value1 = ",value1,"value2 = ",value2)
+
+	var p *int = &value1
+	fmt.Println("p = ",p,"*p = ",*p)
+	pp := &p//二级指针
+	fmt.Println("pp = ",pp,"*pp = ",*pp,"**pp = ",*(*pp))
+}
+```
+
+
+
+
+
+## defer
 
 
 

@@ -2777,9 +2777,9 @@ SpringBoot整合JavaMail：
    ```yml
    spring:
      mail:
-       host: smtp.qq.com           #主机地址 这里使用的是QQ邮箱
+       host: smtp.qq.com            #主机地址 这里使用的是QQ邮箱
        username: xxxxxxxxxx@qq.com  #发件人用户账号
-       password: xxxxxxxxxx        #在邮箱中开启IMAP/SMTP和POP3/SMTP服务给的码
+       password: xxxxxxxxxx         #在邮箱中开启IMAP/SMTP和POP3/SMTP服务给的码
    ```
 
 3. 设置**简单邮件**对象**SimpleMailMessage**的发送人、收件人、主题、正文内容，然后用**JavaMailSender发送**
